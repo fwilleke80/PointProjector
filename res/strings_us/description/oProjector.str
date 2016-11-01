@@ -1,0 +1,7 @@
+STRINGTABLE oProjector
+{
+	oProjector								"Projector Object";
+
+	PROJECTOR_GROUP_PARAMS		"Projector";
+	PROJECTOR_LINK						"Link";
+}
