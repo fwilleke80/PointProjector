@@ -1,0 +1,12 @@
+
+*.xcworkspacedata
+
+*.xcuserstate
+
+*.xcsettings
+
+*.xcscheme
+
+*.plist
+
+SplineProjector.dylib
