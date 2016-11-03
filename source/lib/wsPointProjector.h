@@ -4,62 +4,41 @@
 #include "c4d.h"
 #include "lib_collider.h"
 
-#define STR_POINTPROJECTOR_VERSION "PointProjector 1.00 beta"
-
-
-////////////////////////////////////////////////////////////////////
-// Settings struct
-////////////////////////////////////////////////////////////////////
 
 struct wsPointProjectorParams
 {
-	Vector	vDir;
+	Vector	_direction;
 	
-	Bool		bSubdivEnabled;
-	LONG		lSubdivValue;
+	Bool		_subdivEnabled;
+	Int32		_subdivValue;
 
-	wsPointProjectorParams(void) { }
-	wsPointProjectorParams(const Vector &direction) { vDir = direction; }
+	wsPointProjectorParams() : _subdivEnabled(false), _subdivValue(1)
+	{ }
+	
+	wsPointProjectorParams(const Vector &direction) : _direction(direction), _subdivEnabled(false), _subdivValue(1)
+	{ }
+	
+	wsPointProjectorParams(const Vector &direction, Bool subdivEnabled, Int32 subdivValue) : _direction(direction), _subdivEnabled(subdivEnabled), _subdivValue(subdivValue)
+	{ }
 };
 
-
-////////////////////////////////////////////////////////////////////
-// Class declaration
-////////////////////////////////////////////////////////////////////
 
 class wsPointProjector
 {
 private:
-	AutoAlloc<GeRayCollider>	m_rc;
-	PolygonObject							*m_collop;
-	Bool											m_initialized;
+	AutoAlloc<GeRayCollider>	_collider;
+	PolygonObject							*_collisionObject;
+	Bool											_initialized;
 	
 public:
-	Bool	Init(PolygonObject *op, Bool bForce = FALSE);
-	Bool	ProjectPosition(Vector &pos, const Vector &dir, Real dist);
+	Bool	Init(PolygonObject *collisionObject, Bool bForce = false);
+	void	Clear();
+	
+	Bool	ProjectPosition(Vector &position, const Vector &rayDirection, Float rayLength, const Matrix &collisionObjectMg, const Matrix &collisionObjectMgI);
 	Bool	Project(PointObject *op, const wsPointProjectorParams &params);
 	
-	static String GetVersionStr(void)
-	{
-		return String(STR_POINTPROJECTOR_VERSION);
-	}
-	
-	static wsPointProjector *Alloc(void)
-	{
-		return gNew wsPointProjector;
-	}
-	
-	static void Free(wsPointProjector *&ptr)
-	{
-		gDelete(ptr);
-	}
-
-	wsPointProjector(void)
-	{
-		m_initialized = FALSE;
-	}
-	
-	~wsPointProjector(void)	{	}
+	wsPointProjector() : _collisionObject(nullptr), _initialized(false)
+	{ }
 };
 
 #endif

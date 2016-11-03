@@ -2,75 +2,78 @@
 #include "c4d_symbols.h"
 #include "oProjector.h"
 #include "wsPointProjector.h"
+#include "main.h"
 
-#define ID_PROJECTOROBJECT 1026403
 
-///////////////////////////////////////////////////////////////////////////
-// Class declaration
-///////////////////////////////////////////////////////////////////////////
+const Int32 ID_PROJECTOROBJECT = 1026403;	// Unique plugin ID from www.plugincafe.com
+
+
 class oProjector : public ObjectData
 {
 	INSTANCEOF(oProjector, ObjectData)
 
 	private:
-		AutoAlloc<wsPointProjector>	m_projector;
-		wsPointProjectorParams			m_projectorparams;
-		ULONG												m_lastlopdirty;
+		wsPointProjector						_projector;
+		UInt32											_lastlopdirty;
 
 	public:
 		virtual Bool Init						(GeListNode *node);
-		virtual Bool Message				(GeListNode *node, LONG type, void *data);
+		virtual Bool Message				(GeListNode *node, Int32 type, void *data);
 		virtual DRAWRESULT Draw			(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDrawHelp *bh);
-		virtual Bool ModifyObject   (BaseObject *mod, BaseDocument *doc, BaseObject *op, const Matrix &op_mg, const Matrix &mod_mg, Real lod, LONG flags, BaseThread *thread);
+		virtual Bool ModifyObject   (BaseObject *mod, BaseDocument *doc, BaseObject *op, const Matrix &op_mg, const Matrix &mod_mg, Float lod, Int32 flags, BaseThread *thread);
 		virtual void CheckDirty(BaseObject *op, BaseDocument *doc);
 
-		static NodeData *Alloc(void) { return gNew oProjector; }
+		static NodeData *Alloc(void) { return NewObjClear(oProjector); }
 };
 
-// Helper functions
 
-void DrawArrow(BaseDraw *bd, const Vector &pos, Real length, Bool extra = FALSE)
+// Draw an arrow
+static void DrawArrow(BaseDraw *bd, const Vector &pos, Float length, Bool extra = false)
 {
-	if (!bd || length == RCO 0.0) return;
+	if (!bd || length == 0.0) return;
+	
+	// Precalculate some values
+	Float length025 = length * 0.25;
+	Float length075 = length * 0.75;
 
-	bd->DrawLine(pos,																						pos + Vector(RCO 0.0, RCO -length, RCO 0.0),														0);
-	bd->DrawLine(pos + Vector(RCO 0.0, RCO -length, RCO 0.0),		pos + Vector(RCO length * RCO 0.25, RCO -length * RCO 0.75, RCO 0.0),		0);
-	bd->DrawLine(pos + Vector(RCO 0.0, RCO -length, RCO 0.0),		pos + Vector(RCO -length * RCO 0.25, RCO -length * RCO 0.75, RCO 0.0),	0);
+	bd->DrawLine(pos, pos + Vector(0.0, -length, 0.0), 0);
+	bd->DrawLine(pos + Vector(0.0, -length, 0.0), pos + Vector(length025, -length075, 0.0), 0);
+	bd->DrawLine(pos + Vector(0.0, -length, 0.0), pos + Vector(-length025, -length075, 0.0), 0);
 
 	if (extra)
 	{
-		bd->DrawLine(pos + Vector(RCO 0.0, RCO -length, RCO 0.0),	pos + Vector(RCO 0.0, RCO -length * RCO 0.75, RCO length * RCO 0.25),		0);
-		bd->DrawLine(pos + Vector(RCO 0.0, RCO -length, RCO 0.0),	pos + Vector(RCO 0.0, RCO -length * RCO 0.75, RCO -length * RCO 0.25),	0);
+		bd->DrawLine(pos + Vector(0.0, -length, 0.0), pos + Vector(0.0, -length075, length025), 0);
+		bd->DrawLine(pos + Vector(0.0, -length, 0.0), pos + Vector(0.0, -length075, -length025), 0);
 	}
 }
 
 
-
-////////////////////////////////////////////////////////////////////
-// Public Class Members
-////////////////////////////////////////////////////////////////////
-
+// Initialize node
 Bool oProjector::Init(GeListNode *node)
 {
-	BaseObject		*op   = (BaseObject*)node;			if (!op) return FALSE;
-	BaseContainer *data = op->GetDataInstance();	if (!data) return FALSE;
+//	BaseObject		*op   = (BaseObject*)node;
+//	if (!op)
+//		return false;
+//	
+//	BaseContainer *bc = op->GetDataInstance();
+//	if (!bc)
+//		return false;
 
-	data->SetReal(PROJECTOR_LINK, NULL);
-
-	return TRUE;
+	return true;
 }
 
-
-Bool oProjector::Message(GeListNode *node, LONG type, void *data)
+// Catch messages
+Bool oProjector::Message(GeListNode *node, Int32 type, void *data)
 {
 	if (type == MSG_MENUPREPARE)
 	{
-		((BaseObject*)node)->SetDeformMode(TRUE);
+		((BaseObject*)node)->SetDeformMode(true);
 	}
-	return TRUE;
+	
+	return true;
 }
 
-
+// Draw visualization
 DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDrawHelp *bh)
 {
 	if (type == DRAWPASS_OBJECT)
@@ -88,82 +91,94 @@ DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDra
 		bd->SetPen(bd->GetObjectColor(bh, op));
 
 		// Draw arrows
-		DrawArrow(bd, Vector(RCO 50.0, RCO 0.0, RCO 0.0), RCO 100.0, TRUE);
-		DrawArrow(bd, Vector(RCO -50.0, RCO 0.0, RCO 0.0), RCO 100.0, TRUE);
-		DrawArrow(bd, Vector(RCO 0.0, RCO 0.0, RCO 50.0), RCO 100.0, TRUE);
-		DrawArrow(bd, Vector(RCO 0.0, RCO 0.0, RCO -50.0), RCO 100.0, TRUE);
+		DrawArrow(bd, Vector(50.0, 0.0, 0.0), 100.0, true);
+		DrawArrow(bd, Vector(-50.0, 0.0, 0.0), 100.0, true);
+		DrawArrow(bd, Vector(0.0, 0.0, 50.0), 100.0, true);
+		DrawArrow(bd, Vector(0.0, 0.0, -50.0), 100.0, true);
 	}
 
 	return DRAWRESULT_OK;
 }
 
-
-Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op, const Matrix &op_mg, const Matrix &mod_mg, Real lod, LONG flags, BaseThread *thread)
+// Modify points of input object
+Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op, const Matrix &op_mg, const Matrix &mod_mg, Float lod, Int32 flags, BaseThread *thread)
 {
 	// Cancel if something's wrong
-	if (!op || !mod) return TRUE;
-	if (!op->IsInstanceOf(Opoint)) return TRUE;
-	BaseContainer *data = mod->GetDataInstance(); if (!data) return TRUE;
-	PolygonObject *collop = (PolygonObject*)data->GetObjectLink(PROJECTOR_LINK, doc); if (!collop) return TRUE;
+	if (!op || !mod)
+		return true;
+	
+	if (!op->IsInstanceOf(Opoint))
+		return true;
+	
+	BaseContainer *bc = mod->GetDataInstance();
+	if (!bc)
+		return true;
+	
+	PolygonObject *collisionObject = static_cast<PolygonObject*>(bc->GetObjectLink(PROJECTOR_LINK, doc));
+	if (!collisionObject)
+		return true;
 
 	// Initialize projector
-	if (!m_projector->Init(collop)) return TRUE;
+	if (!_projector.Init(collisionObject))
+		return false;
 
 	// Calculate projection direction in global space
-	Vector direction = Vector(RCO 0.0, RCO -1.0, RCO 0.0) ^ mod->GetMg();
+	Vector direction = mod->GetMg().TransformVector(Vector(0.0, -1.0, 0.0));
 
 	// Parameters for projection
-	m_projectorparams.bSubdivEnabled = FALSE;
-	m_projectorparams.lSubdivValue = 0;
-	m_projectorparams.vDir = direction;
+	wsPointProjectorParams projectorParams(direction);
 
-	// Do project
-	if(!m_projector->Project((PolygonObject*)op, m_projectorparams)) return TRUE;
+	// Perform projection
+	if(!_projector.Project((PolygonObject*)op, projectorParams)) return true;
 
+	// Send update message
 	mod->Message(MSG_UPDATE);
 
-	return TRUE;
+	return true;
 }
 
-// Check if linked object has been changed in any way
+// Check if modifier or linked object have been changed in any way
 void oProjector::CheckDirty(BaseObject *op, BaseDocument *doc)
 {
-	if (!op || !doc) return;
+	if (!op || !doc)
+		return;
 
 	BaseContainer *bc = op->GetDataInstance();
-	if (!bc) return;
-	ULONG dirtyness = 0;
+	if (!bc)
+		return;
+	
+	UInt32 dirtyness = 0;
 
 	// Get linked object
-	BaseObject	*lop = (BaseObject*)bc->GetLink(PROJECTOR_LINK, doc, Obase);
-	if (!lop) return;
+	BaseObject *collisionObject = (BaseObject*)bc->GetLink(PROJECTOR_LINK, doc, Obase);
+	if (!collisionObject)
+		return;
 
-	while (lop)
+	// Check for linked object's (or its parents') dirtyness
+	while (collisionObject)
 	{
-		dirtyness += lop->GetDirty(DIRTYFLAGS_MATRIX|DIRTYFLAGS_DATA);
-		lop = lop->GetUp();
+		dirtyness += collisionObject->GetDirty(DIRTYFLAGS_MATRIX|DIRTYFLAGS_DATA);
+		collisionObject = collisionObject->GetUp();
 	}
 
-	BaseObject *uop = op;
-	while (uop)
+	// Check for modifier's (or its parents') dirtyness
+	BaseObject *parentObject = op;
+	while (parentObject)
 	{
-		dirtyness += uop->GetDirty(DIRTYFLAGS_MATRIX|DIRTYFLAGS_DATA);
-		uop = uop->GetUp();
+		dirtyness += parentObject->GetDirty(DIRTYFLAGS_MATRIX|DIRTYFLAGS_DATA);
+		parentObject = parentObject->GetUp();
 	}
 
-	if (dirtyness != m_lastlopdirty)
+	// Compare dirtyness to previous dirtyness, set modifier dirty if necessary
+	if (dirtyness != _lastlopdirty)
 	{
-		m_lastlopdirty = dirtyness;
+		_lastlopdirty = dirtyness;
 		op->SetDirty(DIRTYFLAGS_DATA);
 	}
 }
 
 
-////////////////////////////////////////////////////////////////////
-// Register Function
-////////////////////////////////////////////////////////////////////
-
-Bool RegisterProjectorObject(void)
+Bool RegisterProjectorObject()
 {
-	return RegisterObjectPlugin(ID_PROJECTOROBJECT, GeLoadString(IDS_PROJECTOROBJECT), OBJECT_MODIFIER, oProjector::Alloc, "oProjector", AutoBitmap("oProjector.tif"),0);
+	return RegisterObjectPlugin(ID_PROJECTOROBJECT, GeLoadString(IDS_PROJECTOROBJECT), OBJECT_MODIFIER, oProjector::Alloc, "oProjector", AutoBitmap("oProjector.tif"), 0);
 }
