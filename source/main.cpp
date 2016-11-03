@@ -1,47 +1,30 @@
 #include "c4d.h"
 #include "wsPointProjector.h"
+#include "main.h"
 
-// forward declarations
-Bool RegisterProjectorObject(void);
-
-C4D_CrashHandler old_handler;
-
-void SDKCrashHandler(CHAR *crashinfo)
-{
-	// don't forget to call the original handler!!!
-	if (old_handler) (*old_handler)(crashinfo);
-}
 
 Bool PluginStart(void)
 {
-	// example of installing a crash handler
-	old_handler = C4DOS.CrashHandler;		// backup the original handler (must be called!)
-	C4DOS.CrashHandler = SDKCrashHandler;	// insert the own handler
-	
-	if (!RegisterProjectorObject()) return FALSE;
-	GePrint("PointProjector Plugin initialized with " + wsPointProjector::GetVersionStr());
+	if (!RegisterProjectorObject()) return false;
 
-	return TRUE;
+	return true;
 }
 
 void PluginEnd(void)
 {
-	
 }
 
-Bool PluginMessage(LONG id, void *data)
+Bool PluginMessage(Int32 id, void *data)
 {
-	//use the following lines to set a plugin priority
-	//
 	switch (id)
 	{
 		case C4DPL_INIT_SYS:
-			if (!resource.Init()) return FALSE; // don't start plugin without resource
-			return TRUE;
+			if (!resource.Init()) return false; // don't start plugin without resource
+			return true;
 
 		case C4DMSG_PRIORITY: 
-			return TRUE;
+			return true;
 	}
 
-	return FALSE;
+	return false;
 }

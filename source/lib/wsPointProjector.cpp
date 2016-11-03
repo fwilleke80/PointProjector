@@ -3,78 +3,97 @@
 
 // Initialize Projector with op as collision geometry
 // Caller owns the pointed object
-Bool wsPointProjector::Init(PolygonObject *op, Bool bForce)
+Bool wsPointProjector::Init(PolygonObject *collisionObject, Bool force)
 {
-	if (!op) return FALSE;
+	if (!collisionObject) return false;
+	
+	// Check if RayCollider was allocated
+	if (!_collider)
+		goto ErrorHandler;
 	
 	// Initialize RayCollider
-	m_collop = op;
-	if (!m_rc->Init(m_collop, bForce))
-	{
-		m_initialized = FALSE;
-		return FALSE;
-	}
+	_collisionObject = collisionObject;
+	if (!_collider->Init(_collisionObject, force))
+		goto ErrorHandler;
 	
-	m_initialized = TRUE;
-
-	return TRUE;
+	_initialized = true;
+	return true;
+	
+ErrorHandler:
+	_initialized = false;
+	return false;
 }
 
 // Project a single point
-Bool wsPointProjector::ProjectPosition(Vector &pos, const Vector &dir, Real dist)
+Bool wsPointProjector::ProjectPosition(Vector &position, const Vector &rayDirection, Float rayLength, const Matrix &collisionObjectMg, const Matrix &collisionObjectMgI)
 {
-	if (!m_initialized || !m_rc || !m_collop) return FALSE;
-	if (dist == RCO 0.0 || dir == Vector(RCO 0.0)) return FALSE;
+	if (!_initialized || !_collider || !_collisionObject)
+		return false;
+	
+	if (rayLength <= 0.0 || rayDirection == Vector())
+		return false;
 
-	GeRayColResult res;
-	Vector ppos = pos * !m_collop->GetMg();			// Transform position to m_collop's local space
+	GeRayColResult collisionResult;
+	Vector ppos(collisionObjectMgI * position);	// Transform position to m_collop's local space
 
-	if (m_rc->Intersect(ppos, dir, dist, FALSE))
+	if (_collider->Intersect(ppos, rayDirection, rayLength, false))
 	{
 		// Get collision result
-		if (!m_rc->GetNearestIntersection(&res)) return FALSE;
+		if (!_collider->GetNearestIntersection(&collisionResult)) return false;
 
 		// Transform position back to global space
-		pos = res.hitpos * m_collop->GetMg();
+		position = collisionObjectMg * collisionResult.hitpos;
 	}
 
-	return TRUE;
+	return true;
 }
 
-// Iterate all points of op and project them onto m_geom
+// Iterate all points of op and project them onto _collisionObject
 Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &params)
 {
-	if (!m_initialized || !m_rc || !m_collop || !op) return FALSE;
+	if (!_initialized || !_collider || !_collisionObject || !op)
+		return FALSE;
+	
+	Vector rayPosition(DC);
 
 	// Get point count
-	LONG l_count = op->GetPointCount();
-	if (l_count <= 0) return FALSE;
+	Int32 pointCount = op->GetPointCount();
+	if (pointCount <= 0)
+		return false;
 	
 	// Get writable point array
 	Vector *padr = op->GetPointW();
-	if (!padr) return FALSE;
+	if (!padr)
+		return false;
+	
+	// Get global Matrix of collision object and op (precalculated for better performance)
+	Matrix collisionObjectMg = _collisionObject->GetMg();
+	Matrix opMg = op->GetMg();
+	
+	// Also calculate the inversions of both matrices (precalculated for better performance)
+	Matrix collisionObjectMgI = ~collisionObjectMg;
+	Matrix opMgI = ~opMg;
 	
 	// Subdivide, if desired
 	/* TO DO */
 
 	// Calculate a ray length.
-	// The resulting "dist" might be a bit too long, but with this we're on the safe side
-	Real dist = Len(m_collop->GetMg().off - op->GetMg().off) + VectorSum(m_collop->GetRad()) + VectorSum(op->GetRad());
+	// The resulting length might be a bit too long, but with this we're on the safe side. No ray should ever be too short.
+	Float rayLength = (collisionObjectMg.off - opMg.off).GetLength() + _collisionObject->GetRad().GetSum()+ op->GetRad().GetSum();
 
 	// Iterate points
-	LONG i(DC);
-	for (i = 0; i < l_count; i++)
+	for (Int32 i = 0; i < pointCount; i++)
 	{
 		// Transform point position to global space
-		Vector pos = padr[i] * op->GetMg();
+		rayPosition = opMg * padr[i];
 
 		// Project point
-		if (!ProjectPosition(pos, params.vDir, dist))
-			return FALSE;
+		if (!ProjectPosition(rayPosition, params._direction, rayLength, collisionObjectMg, collisionObjectMgI))
+			return false;
 
 		// Transform point position back to op's local space
-		padr[i] = pos * !op->GetMg();
+		padr[i] = opMgI * rayPosition;
 	}
 		
-	return TRUE;
+	return true;
 }
