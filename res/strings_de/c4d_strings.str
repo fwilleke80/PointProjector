@@ -1,4 +1,5 @@
 STRINGTABLE
 {
   IDS_PROJECTOROBJECT "Projektor";
+  IDS_LOADING					"Lade #";
 }
