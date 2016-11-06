@@ -12,3 +12,17 @@
 SplineProjector.dylib
 
 *.xcbkptlist
+*.suo
+SplineProjector.cdl64
+*.opensdf
+*.pdb
+*.sdf
+*.user
+*.obj
+*.log
+*.lastbuildstate
+*.tlog
+*.lib
+*.exp
+*.cache
+*.db
