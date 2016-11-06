@@ -8,5 +8,13 @@ CONTAINER oProjector
 		DEFAULT 1;
 		
 		LINK		PROJECTOR_LINK				{ ACCEPT { Opolygon; } }
+		LONG		PROJECTOR_MODE
+		{
+			CYCLE
+			{
+				PROJECTOR_MODE_PARALLEL;
+				PROJECTOR_MODE_SPHERICAL;
+			}
+		}
 	}
 }

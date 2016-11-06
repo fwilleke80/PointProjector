@@ -4,4 +4,7 @@ STRINGTABLE oProjector
 
 	PROJECTOR_GROUP_PARAMS		"Projector";
 	PROJECTOR_LINK						"Link";
+	PROJECTOR_MODE						"Mode";
+		PROJECTOR_MODE_PARALLEL		"Parallel";
+		PROJECTOR_MODE_SPHERICAL	"Spherical";
 }

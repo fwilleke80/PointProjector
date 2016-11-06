@@ -33,31 +33,55 @@ static void DrawArrow(BaseDraw *bd, const Vector &pos, Float length, Bool extra 
 	if (!bd || length == 0.0) return;
 	
 	// Precalculate some values
-	Float length025 = length * 0.25;
-	Float length075 = length * 0.75;
+	const Float length025 = length * 0.25;
+	const Float length125 = length * 0.125;
+	const Vector tip = pos + Vector(0.0, 0.0, length);
 
-	bd->DrawLine(pos, pos + Vector(0.0, -length, 0.0), 0);
-	bd->DrawLine(pos + Vector(0.0, -length, 0.0), pos + Vector(length025, -length075, 0.0), 0);
-	bd->DrawLine(pos + Vector(0.0, -length, 0.0), pos + Vector(-length025, -length075, 0.0), 0);
+	bd->DrawLine(pos, tip, 0);	// Main line
+	bd->DrawLine(tip, tip + Vector(length125, 0.0, -length025), 0);
+	bd->DrawLine(tip, tip + Vector(-length125, 0.0, -length025), 0);
 
 	if (extra)
 	{
-		bd->DrawLine(pos + Vector(0.0, -length, 0.0), pos + Vector(0.0, -length075, length025), 0);
-		bd->DrawLine(pos + Vector(0.0, -length, 0.0), pos + Vector(0.0, -length075, -length025), 0);
+		bd->DrawLine(tip, tip + Vector(0.0, length125, -length025), 0);
+		bd->DrawLine(tip, tip + Vector(0.0, -length125, -length025), 0);
 	}
+}
+
+// Draw a star
+static void DrawStar(BaseDraw *bd,const Vector &pos, Float size)
+{
+	if (!bd || size <= 0.0) return;
+	
+	const Float size2 = size * 0.7;
+	
+	
+	// Straight lines
+	bd->DrawLine(Vector(0.0, -size, 0.0), Vector(0.0, size, 0.0), 0);
+	bd->DrawLine(Vector(-size, 0.0, 0.0), Vector(size, 0.0, 0.0), 0);
+	bd->DrawLine(Vector(0.0, 0.0, -size), Vector(0.0, 0.0, size), 0);
+	
+	// Diagonals
+	bd->DrawLine(Vector(-size2, -size2, -size2), Vector(size2, size2, size2), 0);
+	bd->DrawLine(Vector(-size2, size2, -size2), Vector(size2, -size2, size2), 0);
+	bd->DrawLine(Vector(-size2, -size2, size2), Vector(size2, size2, -size2), 0);
+	bd->DrawLine(Vector(size2, -size2, -size2), Vector(-size2, size2, size2), 0);
 }
 
 
 // Initialize node
 Bool oProjector::Init(GeListNode *node)
 {
-//	BaseObject		*op   = (BaseObject*)node;
-//	if (!op)
-//		return false;
-//	
-//	BaseContainer *bc = op->GetDataInstance();
-//	if (!bc)
-//		return false;
+	BaseObject		*op   = (BaseObject*)node;
+	if (!op)
+		return false;
+	
+	BaseContainer *bc = op->GetDataInstance();
+	if (!bc)
+		return false;
+	
+	// Init projection mode attribute
+	bc->SetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
 
 	return true;
 }
@@ -86,15 +110,24 @@ DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDra
 
 		BaseObject *lop = (BaseObject*)data->GetObjectLink(PROJECTOR_LINK, doc);
 		if (!lop) return DRAWRESULT_OK;
+		
+		PROJECTORMODE mode = (PROJECTORMODE)data->GetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
 
 		bd->SetMatrix_Matrix(op, op->GetMg());
 		bd->SetPen(bd->GetObjectColor(bh, op));
 
 		// Draw arrows
-		DrawArrow(bd, Vector(50.0, 0.0, 0.0), 100.0, true);
-		DrawArrow(bd, Vector(-50.0, 0.0, 0.0), 100.0, true);
-		DrawArrow(bd, Vector(0.0, 0.0, 50.0), 100.0, true);
-		DrawArrow(bd, Vector(0.0, 0.0, -50.0), 100.0, true);
+		if (mode == PROJECTORMODE_PARALLEL)
+		{
+			DrawArrow(bd, Vector(50.0, 0.0, 0.0), 100.0, true);
+			DrawArrow(bd, Vector(-50.0, 0.0, 0.0), 100.0, true);
+			DrawArrow(bd, Vector(0.0, 50.0, 0.0), 100.0, true);
+			DrawArrow(bd, Vector(0.0, -50.0, 0.0), 100.0, true);
+		}
+		else
+		{
+			DrawStar(bd, Vector(0.0), 100.0);
+		}
 	}
 
 	return DRAWRESULT_OK;
@@ -118,15 +151,14 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 	if (!collisionObject)
 		return true;
 
+	PROJECTORMODE mode = (PROJECTORMODE)bc->GetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
+
 	// Initialize projector
 	if (!_projector.Init(collisionObject))
 		return false;
 
-	// Calculate projection direction in global space
-	Vector direction = mod->GetMg().TransformVector(Vector(0.0, -1.0, 0.0));
-
 	// Parameters for projection
-	wsPointProjectorParams projectorParams(direction);
+	wsPointProjectorParams projectorParams(mod->GetMg(), mode);
 
 	// Perform projection
 	if(!_projector.Project((PolygonObject*)op, projectorParams)) return true;
@@ -170,7 +202,7 @@ void oProjector::CheckDirty(BaseObject *op, BaseDocument *doc)
 	}
 
 	// Compare dirtyness to previous dirtyness, set modifier dirty if necessary
-	if (dirtyness != _lastlopdirty)
+	if (dirtyness != _lastlopdirty + 1)
 	{
 		_lastlopdirty = dirtyness;
 		op->SetDirty(DIRTYFLAGS_DATA);
