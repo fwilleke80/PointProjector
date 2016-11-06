@@ -1,2 +1,7 @@
-1.00 BETA
+1.1
+- Added Spherical projection mode
+- Changed parallel projection direction to +Z
+- Bug fixes
+
+1.00
 - Initial version
