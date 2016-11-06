@@ -1,10 +1,13 @@
 #include "c4d.h"
+#include "c4d_symbols.h"
 #include "wsPointProjector.h"
 #include "main.h"
 
+#define PLUGIN_NAME "SplineProjector 1.1"
 
 Bool PluginStart(void)
 {
+	GePrint(GeLoadString(IDS_LOADING, PLUGIN_NAME));
 	if (!RegisterProjectorObject()) return false;
 
 	return true;
