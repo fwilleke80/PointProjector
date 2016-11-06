@@ -5,20 +5,24 @@
 #include "lib_collider.h"
 
 
+// Modes of projection
+enum PROJECTORMODE
+{
+	PROJECTORMODE_PARALLEL	= 1,
+	PROJECTORMODE_SPHERICAL	= 2
+} ENUM_END_LIST(PROJECTORMODE);
+
+
+// Parameters for projection
 struct wsPointProjectorParams
 {
-	Vector	_direction;
+	Matrix	_modifierMg;
+	PROJECTORMODE	_mode;
 	
-	Bool		_subdivEnabled;
-	Int32		_subdivValue;
-
-	wsPointProjectorParams() : _subdivEnabled(false), _subdivValue(1)
+	wsPointProjectorParams() : _mode(PROJECTORMODE_PARALLEL)
 	{ }
 	
-	wsPointProjectorParams(const Vector &direction) : _direction(direction), _subdivEnabled(false), _subdivValue(1)
-	{ }
-	
-	wsPointProjectorParams(const Vector &direction, Bool subdivEnabled, Int32 subdivValue) : _direction(direction), _subdivEnabled(subdivEnabled), _subdivValue(subdivValue)
+	wsPointProjectorParams(const Matrix &modifierMg, PROJECTORMODE mode) : _modifierMg(modifierMg), _mode(mode)
 	{ }
 };
 

@@ -10,3 +10,5 @@
 *.plist
 
 SplineProjector.dylib
+
+*.xcbkptlist
