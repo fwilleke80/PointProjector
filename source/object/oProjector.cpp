@@ -8,25 +8,6 @@
 const Int32 ID_PROJECTOROBJECT = 1026403;	// Unique plugin ID from www.plugincafe.com
 
 
-class oProjector : public ObjectData
-{
-	INSTANCEOF(oProjector, ObjectData)
-
-	private:
-		wsPointProjector						_projector;
-		UInt32											_lastlopdirty;
-
-	public:
-		virtual Bool Init						(GeListNode *node);
-		virtual Bool Message				(GeListNode *node, Int32 type, void *data);
-		virtual DRAWRESULT Draw			(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDrawHelp *bh);
-		virtual Bool ModifyObject   (BaseObject *mod, BaseDocument *doc, BaseObject *op, const Matrix &op_mg, const Matrix &mod_mg, Float lod, Int32 flags, BaseThread *thread);
-		virtual void CheckDirty(BaseObject *op, BaseDocument *doc);
-
-		static NodeData *Alloc(void) { return NewObjClear(oProjector); }
-};
-
-
 // Draw an arrow
 static void DrawArrow(BaseDraw *bd, const Vector &pos, Float length, Bool extra = false)
 {
@@ -67,6 +48,26 @@ static void DrawStar(BaseDraw *bd,const Vector &pos, Float size)
 	bd->DrawLine(Vector(-size2, -size2, size2), Vector(size2, size2, -size2), 0);
 	bd->DrawLine(Vector(size2, -size2, -size2), Vector(-size2, size2, size2), 0);
 }
+
+
+// Object plugin class
+class oProjector : public ObjectData
+{
+	INSTANCEOF(oProjector, ObjectData)
+	
+private:
+	wsPointProjector						_projector;
+	UInt32											_lastlopdirty;
+	
+public:
+	virtual Bool Init						(GeListNode *node);
+	virtual Bool Message				(GeListNode *node, Int32 type, void *data);
+	virtual DRAWRESULT Draw			(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDrawHelp *bh);
+	virtual Bool ModifyObject   (BaseObject *mod, BaseDocument *doc, BaseObject *op, const Matrix &op_mg, const Matrix &mod_mg, Float lod, Int32 flags, BaseThread *thread);
+	virtual void CheckDirty(BaseObject *op, BaseDocument *doc);
+	
+	static NodeData *Alloc(void) { return NewObjClear(oProjector); }
+};
 
 
 // Initialize node
