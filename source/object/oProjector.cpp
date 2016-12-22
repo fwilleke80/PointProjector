@@ -83,6 +83,8 @@ Bool oProjector::Init(GeListNode *node)
 	
 	// Init projection mode attribute
 	bc->SetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
+	bc->SetFloat(PROJECTOR_OFFSET, 0.0);
+	bc->SetFloat(PROJECTOR_BLEND, 1.0);
 
 	return true;
 }
@@ -153,16 +155,18 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 		return true;
 
 	PROJECTORMODE mode = (PROJECTORMODE)bc->GetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
+	Float offset = bc->GetFloat(PROJECTOR_OFFSET, 0.0);
+	Float blend = bc->GetFloat(PROJECTOR_BLEND, 1.0);
 
 	// Initialize projector
 	if (!_projector.Init(collisionObject))
 		return false;
 
 	// Parameters for projection
-	wsPointProjectorParams projectorParams(mod->GetMg(), mode);
+	wsPointProjectorParams projectorParams(mod->GetMg(), mode, offset, blend);
 
 	// Perform projection
-	if(!_projector.Project((PolygonObject*)op, projectorParams)) return true;
+	if(!_projector.Project((PointObject*)op, projectorParams)) return true;
 
 	// Send update message
 	mod->Message(MSG_UPDATE);

@@ -26,7 +26,7 @@ ErrorHandler:
 }
 
 // Project a single point
-Bool wsPointProjector::ProjectPosition(Vector &position, const Vector &rayDirection, Float rayLength, const Matrix &collisionObjectMg, const Matrix &collisionObjectMgI)
+Bool wsPointProjector::ProjectPosition(Vector &position, const Vector &rayDirection, Float rayLength, const Matrix &collisionObjectMg, const Matrix &collisionObjectMgI, Float offset, Float blend)
 {
 	if (!_initialized || !_collider || !_collisionObject)
 		return false;
@@ -34,17 +34,33 @@ Bool wsPointProjector::ProjectPosition(Vector &position, const Vector &rayDirect
 	if (rayLength <= 0.0 || rayDirection == Vector())
 		return false;
 
+	position = collisionObjectMgI * position;		// Transform position to m_collop's local space
 	GeRayColResult collisionResult;
-	Vector rPos(collisionObjectMgI * position);				// Transform position to m_collop's local space
+	Vector rPos(position);
 	Vector rDir(collisionObjectMgI.TransformVector(rayDirection));		// Transform direction to m_collop's local space
 
 	if (_collider->Intersect(rPos, rDir, rayLength, false))
 	{
 		// Get collision result
-		if (!_collider->GetNearestIntersection(&collisionResult)) return false;
+		if (!_collider->GetNearestIntersection(&collisionResult))
+			return false;
+		
+		position = collisionResult.hitpos;
+		
+		// Apply offset
+		if (offset != 0.0)
+		{
+			position += collisionResult.s_normal.GetNormalized() * offset;
+		}
+		
+		// Apply blend
+		if (blend != 1.0)
+		{
+			position = Blend(rPos, position, blend);
+		}
 		
 		// Transform position back to global space
-		position = collisionObjectMg * collisionResult.hitpos;
+		position = collisionObjectMg * position;
 	}
 
 	return true;
@@ -97,7 +113,7 @@ Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &pa
 		}
 		
 		// Project point
-		if (!ProjectPosition(rayPosition, rayDirection, rayLength, collisionObjectMg, collisionObjectMgI))
+		if (!ProjectPosition(rayPosition, rayDirection, rayLength, collisionObjectMg, collisionObjectMgI, params._offset, params._blend))
 			return false;
 
 		// Transform point position back to op's local space
