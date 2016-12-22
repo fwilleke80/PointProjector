@@ -180,7 +180,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0810;
-				ORGANIZATIONNAME = "MAXON Computer GmbH";
+				ORGANIZATIONNAME = "";
 			};
 			buildConfigurationList = A0A668333900000000410000 /* Build configuration list for PBXProject "SplineProjector" */;
 			compatibilityVersion = "Xcode 3.2";
