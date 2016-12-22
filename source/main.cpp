@@ -3,9 +3,9 @@
 #include "wsPointProjector.h"
 #include "main.h"
 
-#define PLUGIN_NAME "SplineProjector 1.1"
+#define PLUGIN_NAME "PointProjector 1.2"
 
-Bool PluginStart(void)
+Bool PluginStart()
 {
 	GePrint(GeLoadString(IDS_LOADING, PLUGIN_NAME));
 	if (!RegisterProjectorObject()) return false;
