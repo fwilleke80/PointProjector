@@ -3,6 +3,7 @@
 #include "oProjector.h"
 #include "wsPointProjector.h"
 #include "main.h"
+#include "c4d_falloffdata.h"
 
 
 const Int32 ID_PROJECTOROBJECT = 1026403;	// Unique plugin ID from www.plugincafe.com
@@ -57,7 +58,8 @@ class oProjector : public ObjectData
 	
 private:
 	wsPointProjector						_projector;
-	UInt32											_lastlopdirty;
+	UInt32											_lastlopdirty = 0;
+	C4D_Falloff*								_falloff = nullptr;
 	
 public:
 	virtual Bool Init						(GeListNode *node);
@@ -65,8 +67,22 @@ public:
 	virtual DRAWRESULT Draw			(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDrawHelp *bh);
 	virtual Bool ModifyObject   (BaseObject *mod, BaseDocument *doc, BaseObject *op, const Matrix &op_mg, const Matrix &mod_mg, Float lod, Int32 flags, BaseThread *thread);
 	virtual void CheckDirty(BaseObject *op, BaseDocument *doc);
+	virtual Bool CopyTo(NodeData *dest, GeListNode *snode, GeListNode *dnode, COPYFLAGS flags, AliasTrans *trn);
+	virtual Bool GetDDescription(GeListNode *node, Description *description, DESCFLAGS_DESC &flags);
 	
-	static NodeData *Alloc(void) { return NewObjClear(oProjector); }
+	oProjector()
+	{
+	}
+	
+	~oProjector()
+	{
+		C4D_Falloff::Free(_falloff);
+	}
+	
+	static NodeData *Alloc(void)
+	{
+		return NewObjClear(oProjector);
+	}
 };
 
 
@@ -81,12 +97,18 @@ Bool oProjector::Init(GeListNode *node)
 	if (!bc)
 		return false;
 	
+	// Allocate fallof
+	if (!_falloff)
+		_falloff = C4D_Falloff::Alloc();
+	if (!_falloff)
+		return false;
+
 	// Init projection mode attribute
 	bc->SetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
 	bc->SetFloat(PROJECTOR_OFFSET, 0.0);
 	bc->SetFloat(PROJECTOR_BLEND, 1.0);
 
-	return true;
+	return SUPER::Init(node);
 }
 
 // Catch messages
@@ -97,7 +119,13 @@ Bool oProjector::Message(GeListNode *node, Int32 type, void *data)
 		((BaseObject*)node)->SetDeformMode(true);
 	}
 	
-	return true;
+	if (!_falloff)
+	{
+		if (!_falloff->Message(type))
+			return false;
+	}
+	
+	return SUPER::Message(node, type, data);
 }
 
 // Draw visualization
@@ -132,7 +160,13 @@ DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDra
 			DrawStar(bd, Vector(0.0), 100.0);
 		}
 	}
-
+	
+	if (_falloff)
+	{
+		if (!_falloff->Draw(bd, bh, type))
+			return DRAWRESULT_OK;
+	}
+	
 	return DRAWRESULT_OK;
 }
 
@@ -163,8 +197,8 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 		return false;
 
 	// Parameters for projection
-	wsPointProjectorParams projectorParams(mod->GetMg(), mode, offset, blend);
-
+	wsPointProjectorParams projectorParams(mod->GetMg(), mode, offset, blend, _falloff);
+	
 	// Perform projection
 	if(!_projector.Project((PointObject*)op, projectorParams)) return true;
 
@@ -212,6 +246,33 @@ void oProjector::CheckDirty(BaseObject *op, BaseDocument *doc)
 		_lastlopdirty = dirtyness;
 		op->SetDirty(DIRTYFLAGS_DATA);
 	}
+}
+
+// Copy private data
+Bool oProjector::CopyTo(NodeData *dest, GeListNode *snode, GeListNode *dnode, COPYFLAGS flags, AliasTrans *trn)
+{
+	if (!dest || !snode || !dnode)
+		return false;
+	
+	oProjector* destNode = static_cast<oProjector*>(dest);
+	
+	destNode->_lastlopdirty = _lastlopdirty;
+	if (_falloff)
+	{
+		_falloff->CopyTo(destNode->_falloff);
+	}
+	
+	return SUPER::CopyTo(dest, snode, dnode, flags, trn);
+}
+
+Bool oProjector::GetDDescription(GeListNode *node, Description *description, DESCFLAGS_DESC &flags)
+{
+	if (_falloff)
+	{
+		_falloff->AddFalloffToDescription(description);
+	}
+	
+	return SUPER::GetDDescription(node, description, flags);
 }
 
 

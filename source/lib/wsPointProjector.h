@@ -3,6 +3,7 @@
 
 #include "c4d.h"
 #include "lib_collider.h"
+#include "c4d_falloffdata.h"
 
 
 // Modes of projection
@@ -20,11 +21,12 @@ struct wsPointProjectorParams
 	PROJECTORMODE	_mode = PROJECTORMODE_PARALLEL;
 	Float		_offset = 0.0;
 	Float		_blend = 0.0;
+	C4D_Falloff*	_falloff = nullptr;
 	
 	wsPointProjectorParams()
 	{ }
 	
-	wsPointProjectorParams(const Matrix &modifierMg, PROJECTORMODE mode, Float offset, Float blend) : _modifierMg(modifierMg), _mode(mode), _offset(offset), _blend(blend)
+	wsPointProjectorParams(const Matrix &modifierMg, PROJECTORMODE mode, Float offset, Float blend, C4D_Falloff* falloff) : _modifierMg(modifierMg), _mode(mode), _offset(offset), _blend(blend), _falloff(falloff)
 	{ }
 };
 
