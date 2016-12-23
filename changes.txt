@@ -1,3 +1,11 @@
+1.2
+- Renamed from SplineProjector to PointProjector
+- Made sure it works with all PointObject derivatives, not only SplineObject
+- Added Offset parameter
+- Added Blend parameter
+- Added Falloff support
+- Minor bug fixes
+
 1.1
 - Added Spherical projection mode
 - Changed parallel projection direction to +Z
