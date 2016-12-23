@@ -44,7 +44,7 @@
 		019018571DCB48F7000D41F4 /* wsPointProjector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wsPointProjector.h; sourceTree = "<group>"; };
 		019018591DCB48F7000D41F4 /* oProjector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = oProjector.cpp; sourceTree = "<group>"; };
 		8ACD68381C66E7D100F34089 /* sanitizerbase.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = sanitizerbase.xcconfig; path = ../../frameworks/settings/sanitizerbase.xcconfig; sourceTree = "<group>"; };
-		A08C5CDEA3A66833397B0000 /* SplineProjector.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = SplineProjector.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		A08C5CDEA3A66833397B0000 /* PointProjector.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = PointProjector.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		A0A668333900000000000000 /* debugbase.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = debugbase.xcconfig; path = ../../frameworks/settings/debugbase.xcconfig; sourceTree = SOURCE_ROOT; };
 		A0A668333900000000050000 /* releasebase.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = releasebase.xcconfig; path = ../../frameworks/settings/releasebase.xcconfig; sourceTree = SOURCE_ROOT; };
 		A0A66833391837B5E7000000 /* main.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = main.h; path = source/main.h; sourceTree = SOURCE_ROOT; };
@@ -114,7 +114,7 @@
 		A0A668333900000000230000 /* products */ = {
 			isa = PBXGroup;
 			children = (
-				A08C5CDEA3A66833397B0000 /* SplineProjector.dylib */,
+				A08C5CDEA3A66833397B0000 /* PointProjector.dylib */,
 			);
 			name = products;
 			sourceTree = "<group>";
@@ -155,9 +155,9 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		A08C5CDEA3A6683339000000 /* SplineProjector */ = {
+		A08C5CDEA3A6683339000000 /* PointProjector */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A0A668333900000000460000 /* Build configuration list for PBXNativeTarget "SplineProjector" */;
+			buildConfigurationList = A0A668333900000000460000 /* Build configuration list for PBXNativeTarget "PointProjector" */;
 			buildPhases = (
 				A0A668333900000000320000 /* Sources */,
 				A0A6683339000000000F0000 /* Frameworks */,
@@ -168,9 +168,9 @@
 			dependencies = (
 				A0A6683339F470FF41370000 /* PBXTargetDependency */,
 			);
-			name = SplineProjector;
+			name = PointProjector;
 			productName = cinema4dsdk;
-			productReference = A08C5CDEA3A66833397B0000 /* SplineProjector.dylib */;
+			productReference = A08C5CDEA3A66833397B0000 /* PointProjector.dylib */;
 			productType = "com.apple.product-type.library.dynamic";
 		};
 /* End PBXNativeTarget section */
@@ -182,7 +182,7 @@
 				LastUpgradeCheck = 0810;
 				ORGANIZATIONNAME = "";
 			};
-			buildConfigurationList = A0A668333900000000410000 /* Build configuration list for PBXProject "SplineProjector" */;
+			buildConfigurationList = A0A668333900000000410000 /* Build configuration list for PBXProject "PointProjector" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -200,7 +200,7 @@
 			);
 			projectRoot = "";
 			targets = (
-				A08C5CDEA3A6683339000000 /* SplineProjector */,
+				A08C5CDEA3A6683339000000 /* PointProjector */,
 			);
 		};
 /* End PBXProject section */
@@ -345,7 +345,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A0A668333900000000410000 /* Build configuration list for PBXProject "SplineProjector" */ = {
+		A0A668333900000000410000 /* Build configuration list for PBXProject "PointProjector" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A0A6683339000000004B0000 /* Debug */,
@@ -356,7 +356,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		A0A668333900000000460000 /* Build configuration list for PBXNativeTarget "SplineProjector" */ = {
+		A0A668333900000000460000 /* Build configuration list for PBXNativeTarget "PointProjector" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A0A6683339000000005A0000 /* Debug */,
