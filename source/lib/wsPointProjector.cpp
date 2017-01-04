@@ -25,7 +25,7 @@ ErrorHandler:
 	return false;
 }
 
-// Project a single point
+// Project a single point (expects all positions and directions in global space)
 Bool wsPointProjector::ProjectPosition(Vector &position, const Vector &rayDirection, Float rayLength, const Matrix &collisionObjectMg, const Matrix &collisionObjectMgI, Float offset, Float blend)
 {
 	if (!_initialized || !_collider || !_collisionObject)
@@ -90,11 +90,12 @@ Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &pa
 	const Matrix collisionObjectMgI = ~collisionObjectMg;
 	const Matrix opMgI = ~opMg;
 	
-	// Ray direction
+	// Ray position in gobal space
 	Vector rayPosition(DC);
+	Vector originalRayPosition(DC);
 	
 	// Ray direction in global space
-	Vector rayDirection(params._modifierMg.TransformVector(Vector(0.0, 0.0, 1.0)));
+	Vector rayDirection(DC);
 
 	// Calculate a ray length.
 	// The resulting length might be a bit too long, but with this we're on the safe side. No ray should ever be too short.
@@ -105,20 +106,33 @@ Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &pa
 	{
 		// Transform point position to global space
 		rayPosition = opMg * padr[i];
+		originalRayPosition = rayPosition;
 		
 		// Calculate ray direction for spherical projection
 		if (params._mode == PROJECTORMODE_SPHERICAL)
 		{
 			rayDirection = rayPosition - params._modifierMg.off;
 		}
+		else
+		{
+			rayDirection = params._modifierMg.TransformVector(Vector(0.0, 0.0, 1.0));
+		}
 		
 		// Project point
 		if (!ProjectPosition(rayPosition, rayDirection, rayLength, collisionObjectMg, collisionObjectMgI, params._offset, params._blend))
 			return false;
-
+		
 		// Transform point position back to op's local space
 		padr[i] = opMgI * rayPosition;
-	}
-		
+
+		// Sample & apply falloff
+		if (params._falloff)
+		{
+			Float falloffWeight = 0.0;
+			params._falloff->Sample(originalRayPosition, &falloffWeight);
+			rayPosition = Blend(originalRayPosition, rayPosition, falloffWeight);
+		}
+}
+	
 	return true;
 }

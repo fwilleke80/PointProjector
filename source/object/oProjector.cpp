@@ -50,6 +50,15 @@ static void DrawStar(BaseDraw *bd,const Vector &pos, Float size)
 	bd->DrawLine(Vector(size2, -size2, -size2), Vector(-size2, size2, size2), 0);
 }
 
+// Check if a falloff can be skipped
+static Bool SkipFalloff(BaseContainer *bc)
+{
+	if (!bc)
+		return true;
+	
+	return (bc->GetInt32(FALLOFF_MODE) == FALLOFF_MODE_INFINITE && bc->GetFloat(FALLOFF_STRENGTH) == 1.0);
+}
+
 
 // Object plugin class
 class oProjector : public ObjectData
@@ -57,20 +66,23 @@ class oProjector : public ObjectData
 	INSTANCEOF(oProjector, ObjectData)
 	
 private:
-	wsPointProjector						_projector;
-	UInt32											_lastlopdirty = 0;
-	C4D_Falloff*								_falloff = nullptr;
+	wsPointProjector	_projector;
+	UInt32						_lastlopdirty;
+	C4D_Falloff*			_falloff;
 	
 public:
-	virtual Bool Init						(GeListNode *node);
-	virtual Bool Message				(GeListNode *node, Int32 type, void *data);
-	virtual DRAWRESULT Draw			(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDrawHelp *bh);
-	virtual Bool ModifyObject   (BaseObject *mod, BaseDocument *doc, BaseObject *op, const Matrix &op_mg, const Matrix &mod_mg, Float lod, Int32 flags, BaseThread *thread);
+	virtual Bool Init(GeListNode *node);
+	virtual Bool Message(GeListNode *node, Int32 type, void *data);
+	virtual DRAWRESULT Draw(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDrawHelp *bh);
+	virtual Bool ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op, const Matrix &op_mg, const Matrix &mod_mg, Float lod, Int32 flags, BaseThread *thread);
 	virtual void CheckDirty(BaseObject *op, BaseDocument *doc);
 	virtual Bool CopyTo(NodeData *dest, GeListNode *snode, GeListNode *dnode, COPYFLAGS flags, AliasTrans *trn);
 	virtual Bool GetDDescription(GeListNode *node, Description *description, DESCFLAGS_DESC &flags);
 	
-	oProjector()
+	Bool AllocFalloff();
+	void FreeFalloff();
+	
+	oProjector() : _lastlopdirty(0), _falloff(nullptr)
 	{
 	}
 	
@@ -97,16 +109,13 @@ Bool oProjector::Init(GeListNode *node)
 	if (!bc)
 		return false;
 	
-	// Allocate fallof
-	if (!_falloff)
-		_falloff = C4D_Falloff::Alloc();
-	if (!_falloff)
-		return false;
-
 	// Init projection mode attribute
 	bc->SetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
 	bc->SetFloat(PROJECTOR_OFFSET, 0.0);
 	bc->SetFloat(PROJECTOR_BLEND, 1.0);
+	
+	if (!AllocFalloff())
+		return false;
 
 	return SUPER::Init(node);
 }
@@ -131,6 +140,9 @@ Bool oProjector::Message(GeListNode *node, Int32 type, void *data)
 // Draw visualization
 DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDrawHelp *bh)
 {
+	if (!op || !bd || !bh)
+		return DRAWRESULT_SKIP;
+	
 	if (type == DRAWPASS_OBJECT)
 	{
 		BaseContainer *data = op->GetDataInstance();
@@ -144,7 +156,15 @@ DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDra
 		
 		PROJECTORMODE mode = (PROJECTORMODE)data->GetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
 
-		bd->SetMatrix_Matrix(op, op->GetMg());
+		if (_falloff && type == DRAWPASS_OBJECT)
+		{
+			_falloff->SetMg(bh->GetMg());
+			
+			if (!_falloff->Draw(bd, bh, type, data))
+				return DRAWRESULT_OK;
+		}
+
+		bd->SetMatrix_Matrix(op, bh->GetMg());
 		bd->SetPen(bd->GetObjectColor(bh, op));
 
 		// Draw arrows
@@ -161,11 +181,7 @@ DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDra
 		}
 	}
 	
-	if (_falloff)
-	{
-		if (!_falloff->Draw(bd, bh, type))
-			return DRAWRESULT_OK;
-	}
+	bd->SetMatrix_Matrix(nullptr, Matrix());
 	
 	return DRAWRESULT_OK;
 }
@@ -184,20 +200,34 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 	if (!bc)
 		return true;
 	
+	// Get collision object
 	PolygonObject *collisionObject = static_cast<PolygonObject*>(bc->GetObjectLink(PROJECTOR_LINK, doc));
 	if (!collisionObject)
 		return true;
 
+	// Get parameters
 	PROJECTORMODE mode = (PROJECTORMODE)bc->GetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
 	Float offset = bc->GetFloat(PROJECTOR_OFFSET, 0.0);
 	Float blend = bc->GetFloat(PROJECTOR_BLEND, 1.0);
-
+	
+	// Check if falloff must be evaluated
+	Bool skipFalloff = SkipFalloff(bc);
+	
+	// Initialize falloff
+	if (_falloff && !skipFalloff)
+	{
+		if (!_falloff->InitFalloff(bc, doc, op))
+			return false;
+		
+		_falloff->SetMg(mod->GetMg());
+	}
+	
 	// Initialize projector
 	if (!_projector.Init(collisionObject))
 		return false;
 
 	// Parameters for projection
-	wsPointProjectorParams projectorParams(mod->GetMg(), mode, offset, blend, _falloff);
+	wsPointProjectorParams projectorParams(mod->GetMg(), mode, offset, blend, skipFalloff ? nullptr : _falloff);
 	
 	// Perform projection
 	if(!_projector.Project((PointObject*)op, projectorParams)) return true;
@@ -267,12 +297,46 @@ Bool oProjector::CopyTo(NodeData *dest, GeListNode *snode, GeListNode *dnode, CO
 
 Bool oProjector::GetDDescription(GeListNode *node, Description *description, DESCFLAGS_DESC &flags)
 {
+	if (!node || !description)
+		return false;
+	
+	BaseObject *op = static_cast<BaseObject*>(node);
+	BaseContainer *bc = op->GetDataInstance();
+	if (!bc)
+		return false;
+	
+	if (!description->LoadDescription(op->GetType()))
+		return false;
+	
 	if (_falloff)
 	{
-		_falloff->AddFalloffToDescription(description);
+		if (!_falloff->SetMode(bc->GetInt32(FALLOFF_MODE, FALLOFF_MODE_INFINITE), bc))
+			return false;
+		
+		if (!_falloff->AddFalloffToDescription(description, bc))
+			return false;
 	}
 	
+	flags |= DESCFLAGS_DESC_LOADED;
+	
 	return SUPER::GetDDescription(node, description, flags);
+}
+
+Bool oProjector::AllocFalloff()
+{
+	if (!_falloff)
+	{
+		_falloff = C4D_Falloff::Alloc();
+		if (!_falloff)
+			return false;
+	}
+	
+	return true;
+}
+
+void oProjector::FreeFalloff()
+{
+	C4D_Falloff::Free(_falloff);
 }
 
 

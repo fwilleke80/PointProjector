@@ -1,6 +1,7 @@
 #ifndef __WS_POINTPROJECTOR_H__
 #define __WS_POINTPROJECTOR_H__
 
+
 #include "c4d.h"
 #include "lib_collider.h"
 #include "c4d_falloffdata.h"

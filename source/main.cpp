@@ -3,17 +3,20 @@
 #include "wsPointProjector.h"
 #include "main.h"
 
+
 #define PLUGIN_NAME "PointProjector 1.2"
 
 Bool PluginStart()
 {
-	GePrint(GeLoadString(IDS_LOADING, PLUGIN_NAME));
-	if (!RegisterProjectorObject()) return false;
+	GePrint(PLUGIN_NAME);
+	
+	if (!RegisterProjectorObject())
+		return false;
 
 	return true;
 }
 
-void PluginEnd(void)
+void PluginEnd()
 {
 }
 
@@ -22,7 +25,8 @@ Bool PluginMessage(Int32 id, void *data)
 	switch (id)
 	{
 		case C4DPL_INIT_SYS:
-			if (!resource.Init()) return false; // don't start plugin without resource
+			if (!resource.Init())
+				return false; // don't start plugin without resource
 			return true;
 
 		case C4DMSG_PRIORITY: 
