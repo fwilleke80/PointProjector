@@ -34,33 +34,33 @@ Bool wsPointProjector::ProjectPosition(Vector &position, const Vector &rayDirect
 	if (rayLength <= 0.0 || rayDirection == Vector())
 		return false;
 
-	position = collisionObjectMgI * position;		// Transform position to m_collop's local space
+	Vector workPosition = collisionObjectMgI * position;		// Transform position to m_collop's local space
 	GeRayColResult collisionResult;
-	Vector rPos(position);
+	Vector rPos(workPosition);
 	Vector rDir(collisionObjectMgI.TransformVector(rayDirection));		// Transform direction to m_collop's local space
 
 	if (_collider->Intersect(rPos, rDir, rayLength, false))
 	{
 		// Get collision result
 		if (!_collider->GetNearestIntersection(&collisionResult))
-			return false;
+			return true;
 		
-		position = collisionResult.hitpos;
+		workPosition = collisionResult.hitpos;
 		
 		// Apply offset
 		if (offset != 0.0)
 		{
-			position += collisionResult.s_normal.GetNormalized() * offset;
+			workPosition += collisionResult.s_normal.GetNormalized() * offset;
 		}
 		
 		// Apply blend
 		if (blend != 1.0)
 		{
-			position = Blend(rPos, position, blend);
+			workPosition = Blend(rPos, position, blend);
 		}
 		
 		// Transform position back to global space
-		position = collisionObjectMg * position;
+		position = collisionObjectMg * workPosition;
 	}
 
 	return true;
@@ -119,19 +119,46 @@ Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &pa
 		}
 		
 		// Project point
-		if (!ProjectPosition(rayPosition, rayDirection, rayLength, collisionObjectMg, collisionObjectMgI, params._offset, params._blend))
-			return false;
+		ProjectPosition(rayPosition, rayDirection, rayLength, collisionObjectMg, collisionObjectMgI, params._offset, params._blend);
 		
+		// Stick by distance
+		if (true)
+		{
+			Float maxDist = 150.0;
+			Float maxDistSquared = maxDist * maxDist;
+
+			
+			Float distanceSquared = (rayPosition - originalRayPosition).GetSquaredLength();
+			if (i==0)
+				GePrint(String::FloatToString(distanceSquared) + " < " + String::FloatToString(maxDistSquared) + " ?");
+			
+			if (distanceSquared < maxDistSquared)
+			{
+				Float mixVal = Smoothstep(0.0, maxDistSquared, distanceSquared);
+				if (i==0)
+					GePrint(String::FloatToString(mixVal));
+				
+				rayPosition = Blend(rayPosition, originalRayPosition, mixVal);
+			}
+			else
+			{
+				rayPosition = originalRayPosition;
+			}
+			
+			if (i==0)
+				GePrint(" ");
+		}
+
 		// Transform point position back to op's local space
 		padr[i] = opMgI * rayPosition;
-
+		
 		// Sample & apply falloff
-		if (params._falloff)
-		{
-			Float falloffWeight = 0.0;
-			params._falloff->Sample(originalRayPosition, &falloffWeight);
-			rayPosition = Blend(originalRayPosition, rayPosition, falloffWeight);
-		}
+//		if (params._falloff)
+//		{
+//			Float falloffWeight = 0.0;
+//			params._falloff->Sample(originalRayPosition, &falloffWeight);
+//			rayPosition = Blend(originalRayPosition, rayPosition, falloffWeight);
+//		}
 }
 	
 	return true;
