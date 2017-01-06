@@ -4,7 +4,6 @@
 - Added Offset parameter
 - Added Blend parameter
 - Added Geometry Falloff parameter
-- Added Falloff support
 - Minor bug fixes
 
 1.1

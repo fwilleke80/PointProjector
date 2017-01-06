@@ -3,7 +3,6 @@
 #include "oProjector.h"
 #include "wsPointProjector.h"
 #include "main.h"
-#include "c4d_falloffdata.h"
 
 
 // Unique plugin ID from www.plugincafe.com
@@ -51,15 +50,6 @@ static void DrawStar(BaseDraw *bd,const Vector &pos, Float size)
 	bd->DrawLine(Vector(size2, -size2, -size2), Vector(-size2, size2, size2), 0);
 }
 
-// Check if falloff can be skipped
-static Bool SkipFalloff(BaseContainer *bc)
-{
-	if (!bc)
-		return true;
-	
-	return (bc->GetInt32(FALLOFF_MODE) == FALLOFF_MODE_INFINITE && bc->GetFloat(FALLOFF_STRENGTH) == 1.0);
-}
-
 
 // Object plugin class
 class oProjector : public ObjectData
@@ -68,8 +58,7 @@ class oProjector : public ObjectData
 	
 private:
 	wsPointProjector	_projector;
-	UInt32						_lastlopdirty;
-	C4D_Falloff*			_falloff;
+	UInt32						_lastlopdirty = 0;
 	
 public:
 	virtual Bool Init(GeListNode *node);
@@ -81,22 +70,7 @@ public:
 	virtual Bool GetDDescription(GeListNode *node, Description *description, DESCFLAGS_DESC &flags);
 	virtual Bool GetDEnabling(GeListNode *node, const DescID &id,const GeData &t_data,DESCFLAGS_ENABLE flags,const BaseContainer *itemdesc);
 	
-	Bool AllocFalloff();
-	void FreeFalloff();
-	
-	oProjector() : _lastlopdirty(0), _falloff(nullptr)
-	{
-	}
-	
-	~oProjector()
-	{
-		C4D_Falloff::Free(_falloff);
-	}
-	
-	static NodeData *Alloc(void)
-	{
-		return NewObjClear(oProjector);
-	}
+	static NodeData *Alloc();
 };
 
 
@@ -118,9 +92,6 @@ Bool oProjector::Init(GeListNode *node)
 	bc->SetBool(PROJECTOR_GEOMFALLOFF_ENABLE, false);
 	bc->SetFloat(PROJECTOR_GEOMFALLOFF_DIST, 150.0);
 	
-	if (!AllocFalloff())
-		return false;
-
 	return SUPER::Init(node);
 }
 
@@ -130,12 +101,6 @@ Bool oProjector::Message(GeListNode *node, Int32 type, void *data)
 	if (type == MSG_MENUPREPARE)
 	{
 		((BaseObject*)node)->SetDeformMode(true);
-	}
-	
-	if (!_falloff)
-	{
-		if (!_falloff->Message(type))
-			return false;
 	}
 	
 	return SUPER::Message(node, type, data);
@@ -159,14 +124,6 @@ DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDra
 		if (!lop) return DRAWRESULT_OK;
 		
 		PROJECTORMODE mode = (PROJECTORMODE)data->GetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
-
-		if (_falloff && type == DRAWPASS_OBJECT)
-		{
-			_falloff->SetMg(bh->GetMg());
-			
-			if (!_falloff->Draw(bd, bh, type, data))
-				return DRAWRESULT_OK;
-		}
 
 		bd->SetMatrix_Matrix(op, bh->GetMg());
 		bd->SetPen(bd->GetObjectColor(bh, op));
@@ -213,27 +170,15 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 	PROJECTORMODE mode = (PROJECTORMODE)bc->GetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
 	Float offset = bc->GetFloat(PROJECTOR_OFFSET, 0.0);
 	Float blend = bc->GetFloat(PROJECTOR_BLEND, 1.0);
-	Bool enableGeometryFalloff = bc->GetBool(PROJECTOR_GEOMFALLOFF_ENABLE, false);
+	Bool geometryFalloffEnabled = bc->GetBool(PROJECTOR_GEOMFALLOFF_ENABLE, false);
 	Float geometryFalloffDist = bc->GetFloat(PROJECTOR_GEOMFALLOFF_DIST, 100.0);
-	
-	// Check if falloff must be evaluated
-	Bool skipFalloff = SkipFalloff(bc);
-	
-	// Initialize falloff
-	if (_falloff && !skipFalloff)
-	{
-		if (!_falloff->InitFalloff(bc, doc, op))
-			return false;
-		
-		_falloff->SetMg(mod->GetMg());
-	}
 	
 	// Initialize projector
 	if (!_projector.Init(collisionObject))
 		return false;
 
 	// Parameters for projection
-	wsPointProjectorParams projectorParams(mod->GetMg(), mode, offset, blend, enableGeometryFalloff, geometryFalloffDist, skipFalloff ? nullptr : _falloff);
+	wsPointProjectorParams projectorParams(mod->GetMg(), mode, offset, blend, geometryFalloffEnabled, geometryFalloffDist);
 	
 	// Perform projection
 	if(!_projector.Project((PointObject*)op, projectorParams)) return true;
@@ -293,10 +238,6 @@ Bool oProjector::CopyTo(NodeData *dest, GeListNode *snode, GeListNode *dnode, CO
 	oProjector* destNode = static_cast<oProjector*>(dest);
 	
 	destNode->_lastlopdirty = _lastlopdirty;
-	if (_falloff)
-	{
-		_falloff->CopyTo(destNode->_falloff);
-	}
 	
 	return SUPER::CopyTo(dest, snode, dnode, flags, trn);
 }
@@ -314,16 +255,7 @@ Bool oProjector::GetDDescription(GeListNode *node, Description *description, DES
 	
 	if (!description->LoadDescription(op->GetType()))
 		return false;
-	
-	if (_falloff)
-	{
-		if (!_falloff->SetMode(bc->GetInt32(FALLOFF_MODE, FALLOFF_MODE_INFINITE), bc))
-			return false;
-		
-		if (!_falloff->AddFalloffToDescription(description, bc))
-			return false;
-	}
-	
+
 	flags |= DESCFLAGS_DESC_LOADED;
 	
 	return SUPER::GetDDescription(node, description, flags);
@@ -350,23 +282,10 @@ Bool oProjector::GetDEnabling(GeListNode *node, const DescID &id, const GeData &
 	return SUPER::GetDEnabling(node, id, t_data, flags, itemdesc);
 }
 
-// Allocate the falloff, if it hasn't already been allocated
-Bool oProjector::AllocFalloff()
+// Allocate an instance of oProjector
+NodeData* oProjector::Alloc()
 {
-	if (!_falloff)
-	{
-		_falloff = C4D_Falloff::Alloc();
-		if (!_falloff)
-			return false;
-	}
-	
-	return true;
-}
-
-// Free the falloff
-void oProjector::FreeFalloff()
-{
-	C4D_Falloff::Free(_falloff);
+	return NewObjClear(oProjector);
 }
 
 

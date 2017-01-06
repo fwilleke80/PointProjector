@@ -121,43 +121,26 @@ Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &pa
 		// Project point
 		ProjectPosition(rayPosition, rayDirection, rayLength, collisionObjectMg, collisionObjectMgI, params._offset, params._blend);
 		
-		// Stick by distance
-		if (params._enableGeometryFalloff)
+		// Geometry Falloff
+		if (params._geometryFalloffEnabled)
 		{
 			Float maxDistSquared = params._geometryFalloffDist * params._geometryFalloffDist;
-
 			Float distanceSquared = (rayPosition - originalRayPosition).GetSquaredLength();
-//			if (i==0)
-//				GePrint(String::FloatToString(distanceSquared) + " < " + String::FloatToString(maxDistSquared) + " ?");
 			
 			if (distanceSquared < maxDistSquared)
 			{
 				Float mixVal = Smoothstep(0.0, maxDistSquared, distanceSquared);
-//				if (i==0)
-//					GePrint(String::FloatToString(mixVal));
-				
 				rayPosition = Blend(rayPosition, originalRayPosition, mixVal);
 			}
 			else
 			{
 				rayPosition = originalRayPosition;
 			}
-			
-//			if (i==0)
-//				GePrint(" ");
 		}
 
 		// Transform point position back to op's local space
 		padr[i] = opMgI * rayPosition;
-		
-		// Sample & apply falloff
-//		if (params._falloff)
-//		{
-//			Float falloffWeight = 0.0;
-//			params._falloff->Sample(originalRayPosition, &falloffWeight);
-//			rayPosition = Blend(originalRayPosition, rayPosition, falloffWeight);
-//		}
-}
+	}
 	
 	return true;
 }
