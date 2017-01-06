@@ -1,10 +1,14 @@
 STRINGTABLE oProjector
 {
-	oProjector								"Projector Object";
+	oProjector									"Projector Object";
 
-	PROJECTOR_GROUP_PARAMS		"Projector";
-	PROJECTOR_LINK						"Link";
-	PROJECTOR_MODE						"Mode";
-		PROJECTOR_MODE_PARALLEL		"Parallel";
-		PROJECTOR_MODE_SPHERICAL	"Spherical";
+	PROJECTOR_GROUP_PARAMS			"Projector";
+	PROJECTOR_LINK							"Link";
+	PROJECTOR_MODE							"Mode";
+		PROJECTOR_MODE_PARALLEL			"Parallel";
+		PROJECTOR_MODE_SPHERICAL		"Spherical";
+	PROJECTOR_OFFSET						"Offset";
+	PROJECTOR_BLEND							"Blend";
+	PROJECTOR_GEOMFALLOFF_ENABLE	"Geometry Falloff";
+	PROJECTOR_GEOMFALLOFF_DIST		"Distance";
 }

@@ -25,8 +25,8 @@ ErrorHandler:
 	return false;
 }
 
-// Project a single point
-Bool wsPointProjector::ProjectPosition(Vector &position, const Vector &rayDirection, Float rayLength, const Matrix &collisionObjectMg, const Matrix &collisionObjectMgI)
+// Project a single point (expects all positions and directions in global space)
+Bool wsPointProjector::ProjectPosition(Vector &position, const Vector &rayDirection, Float rayLength, const Matrix &collisionObjectMg, const Matrix &collisionObjectMgI, Float offset, Float blend)
 {
 	if (!_initialized || !_collider || !_collisionObject)
 		return false;
@@ -34,17 +34,33 @@ Bool wsPointProjector::ProjectPosition(Vector &position, const Vector &rayDirect
 	if (rayLength <= 0.0 || rayDirection == Vector())
 		return false;
 
+	Vector workPosition = collisionObjectMgI * position;		// Transform position to m_collop's local space
 	GeRayColResult collisionResult;
-	Vector rPos(collisionObjectMgI * position);				// Transform position to m_collop's local space
+	Vector rPos(workPosition);
 	Vector rDir(collisionObjectMgI.TransformVector(rayDirection));		// Transform direction to m_collop's local space
 
 	if (_collider->Intersect(rPos, rDir, rayLength, false))
 	{
 		// Get collision result
-		if (!_collider->GetNearestIntersection(&collisionResult)) return false;
+		if (!_collider->GetNearestIntersection(&collisionResult))
+			return true;
+		
+		workPosition = collisionResult.hitpos;
+		
+		// Apply offset
+		if (offset != 0.0)
+		{
+			workPosition += collisionResult.s_normal.GetNormalized() * offset;
+		}
+		
+		// Apply blend
+		if (blend != 1.0)
+		{
+			workPosition = Blend(rPos, position, blend);
+		}
 		
 		// Transform position back to global space
-		position = collisionObjectMg * collisionResult.hitpos;
+		position = collisionObjectMg * workPosition;
 	}
 
 	return true;
@@ -74,11 +90,12 @@ Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &pa
 	const Matrix collisionObjectMgI = ~collisionObjectMg;
 	const Matrix opMgI = ~opMg;
 	
-	// Ray direction
+	// Ray position in gobal space
 	Vector rayPosition(DC);
+	Vector originalRayPosition(DC);
 	
 	// Ray direction in global space
-	Vector rayDirection(params._modifierMg.TransformVector(Vector(0.0, 0.0, 1.0)));
+	Vector rayDirection(DC);
 
 	// Calculate a ray length.
 	// The resulting length might be a bit too long, but with this we're on the safe side. No ray should ever be too short.
@@ -89,20 +106,41 @@ Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &pa
 	{
 		// Transform point position to global space
 		rayPosition = opMg * padr[i];
+		originalRayPosition = rayPosition;
 		
 		// Calculate ray direction for spherical projection
 		if (params._mode == PROJECTORMODE_SPHERICAL)
 		{
 			rayDirection = rayPosition - params._modifierMg.off;
 		}
+		else
+		{
+			rayDirection = params._modifierMg.TransformVector(Vector(0.0, 0.0, 1.0));
+		}
 		
 		// Project point
-		if (!ProjectPosition(rayPosition, rayDirection, rayLength, collisionObjectMg, collisionObjectMgI))
-			return false;
+		ProjectPosition(rayPosition, rayDirection, rayLength, collisionObjectMg, collisionObjectMgI, params._offset, params._blend);
+		
+		// Geometry Falloff
+		if (params._geometryFalloffEnabled)
+		{
+			Float maxDistSquared = params._geometryFalloffDist * params._geometryFalloffDist;
+			Float distanceSquared = (rayPosition - originalRayPosition).GetSquaredLength();
+			
+			if (distanceSquared < maxDistSquared)
+			{
+				Float mixVal = Smoothstep(0.0, maxDistSquared, distanceSquared);
+				rayPosition = Blend(rayPosition, originalRayPosition, mixVal);
+			}
+			else
+			{
+				rayPosition = originalRayPosition;
+			}
+		}
 
 		// Transform point position back to op's local space
 		padr[i] = opMgI * rayPosition;
 	}
-		
+	
 	return true;
 }

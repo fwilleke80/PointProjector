@@ -5,7 +5,8 @@
 #include "main.h"
 
 
-const Int32 ID_PROJECTOROBJECT = 1026403;	// Unique plugin ID from www.plugincafe.com
+// Unique plugin ID from www.plugincafe.com
+const Int32 ID_PROJECTOROBJECT = 1026403;
 
 
 // Draw an arrow
@@ -56,24 +57,27 @@ class oProjector : public ObjectData
 	INSTANCEOF(oProjector, ObjectData)
 	
 private:
-	wsPointProjector						_projector;
-	UInt32											_lastlopdirty;
+	wsPointProjector	_projector;
+	UInt32						_lastlopdirty = 0;
 	
 public:
-	virtual Bool Init						(GeListNode *node);
-	virtual Bool Message				(GeListNode *node, Int32 type, void *data);
-	virtual DRAWRESULT Draw			(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDrawHelp *bh);
-	virtual Bool ModifyObject   (BaseObject *mod, BaseDocument *doc, BaseObject *op, const Matrix &op_mg, const Matrix &mod_mg, Float lod, Int32 flags, BaseThread *thread);
+	virtual Bool Init(GeListNode *node);
+	virtual Bool Message(GeListNode *node, Int32 type, void *data);
+	virtual DRAWRESULT Draw(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDrawHelp *bh);
+	virtual Bool ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op, const Matrix &op_mg, const Matrix &mod_mg, Float lod, Int32 flags, BaseThread *thread);
 	virtual void CheckDirty(BaseObject *op, BaseDocument *doc);
+	virtual Bool CopyTo(NodeData *dest, GeListNode *snode, GeListNode *dnode, COPYFLAGS flags, AliasTrans *trn);
+	virtual Bool GetDDescription(GeListNode *node, Description *description, DESCFLAGS_DESC &flags);
+	virtual Bool GetDEnabling(GeListNode *node, const DescID &id,const GeData &t_data,DESCFLAGS_ENABLE flags,const BaseContainer *itemdesc);
 	
-	static NodeData *Alloc(void) { return NewObjClear(oProjector); }
+	static NodeData *Alloc();
 };
 
 
 // Initialize node
 Bool oProjector::Init(GeListNode *node)
 {
-	BaseObject		*op   = (BaseObject*)node;
+	BaseObject *op   = (BaseObject*)node;
 	if (!op)
 		return false;
 	
@@ -83,8 +87,12 @@ Bool oProjector::Init(GeListNode *node)
 	
 	// Init projection mode attribute
 	bc->SetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
-
-	return true;
+	bc->SetFloat(PROJECTOR_OFFSET, 0.0);
+	bc->SetFloat(PROJECTOR_BLEND, 1.0);
+	bc->SetBool(PROJECTOR_GEOMFALLOFF_ENABLE, false);
+	bc->SetFloat(PROJECTOR_GEOMFALLOFF_DIST, 150.0);
+	
+	return SUPER::Init(node);
 }
 
 // Catch messages
@@ -95,12 +103,15 @@ Bool oProjector::Message(GeListNode *node, Int32 type, void *data)
 		((BaseObject*)node)->SetDeformMode(true);
 	}
 	
-	return true;
+	return SUPER::Message(node, type, data);
 }
 
 // Draw visualization
 DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDrawHelp *bh)
 {
+	if (!op || !bd || !bh)
+		return DRAWRESULT_SKIP;
+	
 	if (type == DRAWPASS_OBJECT)
 	{
 		BaseContainer *data = op->GetDataInstance();
@@ -114,7 +125,7 @@ DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDra
 		
 		PROJECTORMODE mode = (PROJECTORMODE)data->GetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
 
-		bd->SetMatrix_Matrix(op, op->GetMg());
+		bd->SetMatrix_Matrix(op, bh->GetMg());
 		bd->SetPen(bd->GetObjectColor(bh, op));
 
 		// Draw arrows
@@ -130,7 +141,9 @@ DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDra
 			DrawStar(bd, Vector(0.0), 100.0);
 		}
 	}
-
+	
+	bd->SetMatrix_Matrix(nullptr, Matrix());
+	
 	return DRAWRESULT_OK;
 }
 
@@ -148,21 +161,27 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 	if (!bc)
 		return true;
 	
+	// Get collision object
 	PolygonObject *collisionObject = static_cast<PolygonObject*>(bc->GetObjectLink(PROJECTOR_LINK, doc));
 	if (!collisionObject)
 		return true;
 
+	// Get parameters
 	PROJECTORMODE mode = (PROJECTORMODE)bc->GetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
-
+	Float offset = bc->GetFloat(PROJECTOR_OFFSET, 0.0);
+	Float blend = bc->GetFloat(PROJECTOR_BLEND, 1.0);
+	Bool geometryFalloffEnabled = bc->GetBool(PROJECTOR_GEOMFALLOFF_ENABLE, false);
+	Float geometryFalloffDist = bc->GetFloat(PROJECTOR_GEOMFALLOFF_DIST, 100.0);
+	
 	// Initialize projector
 	if (!_projector.Init(collisionObject))
 		return false;
 
 	// Parameters for projection
-	wsPointProjectorParams projectorParams(mod->GetMg(), mode);
-
+	wsPointProjectorParams projectorParams(mod->GetMg(), mode, offset, blend, geometryFalloffEnabled, geometryFalloffDist);
+	
 	// Perform projection
-	if(!_projector.Project((PolygonObject*)op, projectorParams)) return true;
+	if(!_projector.Project((PointObject*)op, projectorParams)) return true;
 
 	// Send update message
 	mod->Message(MSG_UPDATE);
@@ -210,7 +229,67 @@ void oProjector::CheckDirty(BaseObject *op, BaseDocument *doc)
 	}
 }
 
+// Copy private data
+Bool oProjector::CopyTo(NodeData *dest, GeListNode *snode, GeListNode *dnode, COPYFLAGS flags, AliasTrans *trn)
+{
+	if (!dest || !snode || !dnode)
+		return false;
+	
+	oProjector* destNode = static_cast<oProjector*>(dest);
+	
+	destNode->_lastlopdirty = _lastlopdirty;
+	
+	return SUPER::CopyTo(dest, snode, dnode, flags, trn);
+}
 
+// Load description and add Falloff elements
+Bool oProjector::GetDDescription(GeListNode *node, Description *description, DESCFLAGS_DESC &flags)
+{
+	if (!node || !description)
+		return false;
+	
+	BaseObject *op = static_cast<BaseObject*>(node);
+	BaseContainer *bc = op->GetDataInstance();
+	if (!bc)
+		return false;
+	
+	if (!description->LoadDescription(op->GetType()))
+		return false;
+
+	flags |= DESCFLAGS_DESC_LOADED;
+	
+	return SUPER::GetDDescription(node, description, flags);
+}
+
+// Enable and disable ('gray out') user controls
+Bool oProjector::GetDEnabling(GeListNode *node, const DescID &id, const GeData &t_data, DESCFLAGS_ENABLE flags, const BaseContainer *itemdesc)
+{
+	if (!node)
+		return false;
+	
+	BaseObject *op = (BaseObject*)node;
+	BaseContainer *data = op->GetDataInstance();
+	if (!data)
+		return false;
+	
+	switch (id[0].id)
+	{
+			// General Settings
+		case PROJECTOR_GEOMFALLOFF_DIST:
+			return data->GetBool(PROJECTOR_GEOMFALLOFF_ENABLE, false);
+	}
+	
+	return SUPER::GetDEnabling(node, id, t_data, flags, itemdesc);
+}
+
+// Allocate an instance of oProjector
+NodeData* oProjector::Alloc()
+{
+	return NewObjClear(oProjector);
+}
+
+
+// Register plugin
 Bool RegisterProjectorObject()
 {
 	return RegisterObjectPlugin(ID_PROJECTOROBJECT, GeLoadString(IDS_PROJECTOROBJECT), OBJECT_MODIFIER, oProjector::Alloc, "oProjector", AutoBitmap("oProjector.tif"), 0);
