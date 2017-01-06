@@ -6,7 +6,8 @@
 #include "c4d_falloffdata.h"
 
 
-const Int32 ID_PROJECTOROBJECT = 1026403;	// Unique plugin ID from www.plugincafe.com
+// Unique plugin ID from www.plugincafe.com
+const Int32 ID_PROJECTOROBJECT = 1026403;
 
 
 // Draw an arrow
@@ -50,7 +51,7 @@ static void DrawStar(BaseDraw *bd,const Vector &pos, Float size)
 	bd->DrawLine(Vector(size2, -size2, -size2), Vector(-size2, size2, size2), 0);
 }
 
-// Check if a falloff can be skipped
+// Check if falloff can be skipped
 static Bool SkipFalloff(BaseContainer *bc)
 {
 	if (!bc)
@@ -78,6 +79,7 @@ public:
 	virtual void CheckDirty(BaseObject *op, BaseDocument *doc);
 	virtual Bool CopyTo(NodeData *dest, GeListNode *snode, GeListNode *dnode, COPYFLAGS flags, AliasTrans *trn);
 	virtual Bool GetDDescription(GeListNode *node, Description *description, DESCFLAGS_DESC &flags);
+	virtual Bool GetDEnabling(GeListNode *node, const DescID &id,const GeData &t_data,DESCFLAGS_ENABLE flags,const BaseContainer *itemdesc);
 	
 	Bool AllocFalloff();
 	void FreeFalloff();
@@ -101,7 +103,7 @@ public:
 // Initialize node
 Bool oProjector::Init(GeListNode *node)
 {
-	BaseObject		*op   = (BaseObject*)node;
+	BaseObject *op   = (BaseObject*)node;
 	if (!op)
 		return false;
 	
@@ -113,6 +115,8 @@ Bool oProjector::Init(GeListNode *node)
 	bc->SetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
 	bc->SetFloat(PROJECTOR_OFFSET, 0.0);
 	bc->SetFloat(PROJECTOR_BLEND, 1.0);
+	bc->SetBool(PROJECTOR_GEOMFALLOFF_ENABLE, false);
+	bc->SetFloat(PROJECTOR_GEOMFALLOFF_DIST, 150.0);
 	
 	if (!AllocFalloff())
 		return false;
@@ -209,6 +213,8 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 	PROJECTORMODE mode = (PROJECTORMODE)bc->GetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
 	Float offset = bc->GetFloat(PROJECTOR_OFFSET, 0.0);
 	Float blend = bc->GetFloat(PROJECTOR_BLEND, 1.0);
+	Bool enableGeometryFalloff = bc->GetBool(PROJECTOR_GEOMFALLOFF_ENABLE, false);
+	Float geometryFalloffDist = bc->GetFloat(PROJECTOR_GEOMFALLOFF_DIST, 100.0);
 	
 	// Check if falloff must be evaluated
 	Bool skipFalloff = SkipFalloff(bc);
@@ -227,7 +233,7 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 		return false;
 
 	// Parameters for projection
-	wsPointProjectorParams projectorParams(mod->GetMg(), mode, offset, blend, skipFalloff ? nullptr : _falloff);
+	wsPointProjectorParams projectorParams(mod->GetMg(), mode, offset, blend, enableGeometryFalloff, geometryFalloffDist, skipFalloff ? nullptr : _falloff);
 	
 	// Perform projection
 	if(!_projector.Project((PointObject*)op, projectorParams)) return true;
@@ -295,6 +301,7 @@ Bool oProjector::CopyTo(NodeData *dest, GeListNode *snode, GeListNode *dnode, CO
 	return SUPER::CopyTo(dest, snode, dnode, flags, trn);
 }
 
+// Load description and add Falloff elements
 Bool oProjector::GetDDescription(GeListNode *node, Description *description, DESCFLAGS_DESC &flags)
 {
 	if (!node || !description)
@@ -322,6 +329,28 @@ Bool oProjector::GetDDescription(GeListNode *node, Description *description, DES
 	return SUPER::GetDDescription(node, description, flags);
 }
 
+// Enable and disable ('gray out') user controls
+Bool oProjector::GetDEnabling(GeListNode *node, const DescID &id, const GeData &t_data, DESCFLAGS_ENABLE flags, const BaseContainer *itemdesc)
+{
+	if (!node)
+		return false;
+	
+	BaseObject *op = (BaseObject*)node;
+	BaseContainer *data = op->GetDataInstance();
+	if (!data)
+		return false;
+	
+	switch (id[0].id)
+	{
+			// General Settings
+		case PROJECTOR_GEOMFALLOFF_DIST:
+			return data->GetBool(PROJECTOR_GEOMFALLOFF_ENABLE, false);
+	}
+	
+	return SUPER::GetDEnabling(node, id, t_data, flags, itemdesc);
+}
+
+// Allocate the falloff, if it hasn't already been allocated
 Bool oProjector::AllocFalloff()
 {
 	if (!_falloff)
@@ -334,12 +363,14 @@ Bool oProjector::AllocFalloff()
 	return true;
 }
 
+// Free the falloff
 void oProjector::FreeFalloff()
 {
 	C4D_Falloff::Free(_falloff);
 }
 
 
+// Register plugin
 Bool RegisterProjectorObject()
 {
 	return RegisterObjectPlugin(ID_PROJECTOROBJECT, GeLoadString(IDS_PROJECTOROBJECT), OBJECT_MODIFIER, oProjector::Alloc, "oProjector", AutoBitmap("oProjector.tif"), 0);
