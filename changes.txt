@@ -3,6 +3,7 @@
 - Made sure it works with all PointObject derivatives, not only SplineObject
 - Added Offset parameter
 - Added Blend parameter
+- Added Geometry Falloff parameter
 - Added Falloff support
 - Minor bug fixes
 
