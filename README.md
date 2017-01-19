@@ -4,7 +4,7 @@ A simple Cinema 4D plugin that projects the points of a spline or polygon object
 
 This plugin demonstrates the following C4D API aspects:
 * Deformer object plugins, derived from `class ObjectData`
-* Ray intersections with class `GeRayCollider`
+* Ray intersections with `class GeRayCollider`
 * Drawing in the viewport
 * Vector and matrix math in general
 * Achieving good performance using a custom caching mechanism with `ObjectData::CheckDirty()`
