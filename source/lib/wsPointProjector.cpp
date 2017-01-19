@@ -56,7 +56,7 @@ Bool wsPointProjector::ProjectPosition(Vector &position, const Vector &rayDirect
 		// Apply blend
 		if (blend != 1.0)
 		{
-			workPosition = Blend(rPos, position, blend);
+			workPosition = Blend(rPos, workPosition, blend);
 		}
 		
 		// Transform position back to global space
