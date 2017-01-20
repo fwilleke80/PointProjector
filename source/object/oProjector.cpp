@@ -287,7 +287,7 @@ void oProjector::CheckDirty(BaseObject *op, BaseDocument *doc)
 // Copy private data
 Bool oProjector::CopyTo(NodeData *dest, GeListNode *snode, GeListNode *dnode, COPYFLAGS flags, AliasTrans *trn)
 {
-	if (!dest || !_falloff)
+	if (!dest)
 		return false;
 	
 	oProjector* destNodeData = static_cast<oProjector*>(dest);
@@ -309,7 +309,7 @@ Bool oProjector::CopyTo(NodeData *dest, GeListNode *snode, GeListNode *dnode, CO
 // Load description and add Falloff elements
 Bool oProjector::GetDDescription(GeListNode *node, Description *description, DESCFLAGS_DESC &flags)
 {
-	if (!node || !description || !_falloff)
+	if (!node || !description)
 		return false;
 	
 	BaseObject *op = static_cast<BaseObject*>(node);
