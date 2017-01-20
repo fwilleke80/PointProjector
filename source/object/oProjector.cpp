@@ -190,6 +190,10 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 	Float blend = bc->GetFloat(PROJECTOR_BLEND, 1.0);
 	Bool geometryFalloffEnabled = bc->GetBool(PROJECTOR_GEOMFALLOFF_ENABLE, false);
 	Float geometryFalloffDist = bc->GetFloat(PROJECTOR_GEOMFALLOFF_DIST, 100.0);
+	
+	// Weight Vertex Map
+	Float32* weightMap = nullptr;
+	weightMap = ToPoint(op)->CalcVertexMap(mod);
 
 	// Initialize falloff
 	if (!_falloff->InitFalloff(bc, doc, mod))
@@ -200,7 +204,7 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 		return false;
 
 	// Parameters for projection
-	wsPointProjectorParams projectorParams(mod->GetMg(), mode, offset, blend, geometryFalloffEnabled, geometryFalloffDist, _falloff);
+	wsPointProjectorParams projectorParams(mod->GetMg(), mode, offset, blend, geometryFalloffEnabled, geometryFalloffDist, weightMap, _falloff);
 	
 	// Perform projection
 	if(!_projector.Project(static_cast<PointObject*>(op), projectorParams))
