@@ -24,11 +24,12 @@ struct wsPointProjectorParams
 	Float		_blend = 0.0;
 	Bool		_geometryFalloffEnabled = false;
 	Float		_geometryFalloffDist = 0.0;
+	C4D_Falloff	*_falloff = nullptr;
 	
 	wsPointProjectorParams()
 	{ }
 	
-	wsPointProjectorParams(const Matrix &modifierMg, PROJECTORMODE mode, Float offset, Float blend, Bool geometryFalloffEnabled, Float geometryFalloffDist) : _modifierMg(modifierMg), _mode(mode), _offset(offset), _blend(blend), _geometryFalloffEnabled(geometryFalloffEnabled), _geometryFalloffDist(geometryFalloffDist)
+	wsPointProjectorParams(const Matrix &modifierMg, PROJECTORMODE mode, Float offset, Float blend, Bool geometryFalloffEnabled, Float geometryFalloffDist, C4D_Falloff *falloff = nullptr) : _modifierMg(modifierMg), _mode(mode), _offset(offset), _blend(blend), _geometryFalloffEnabled(geometryFalloffEnabled), _geometryFalloffDist(geometryFalloffDist), _falloff(falloff)
 	{ }
 };
 
