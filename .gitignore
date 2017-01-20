@@ -13,5 +13,6 @@
 *.opensdf
 *.sdf
 *.tlog
-*.obj
+/*.obj
 *.lastbuildstate
+*.obj
