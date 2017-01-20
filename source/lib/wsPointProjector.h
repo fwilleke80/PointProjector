@@ -19,17 +19,18 @@ enum PROJECTORMODE
 struct wsPointProjectorParams
 {
 	Matrix	_modifierMg;
-	PROJECTORMODE	_mode = PROJECTORMODE_PARALLEL;
-	Float		_offset = 0.0;
-	Float		_blend = 0.0;
-	Bool		_geometryFalloffEnabled = false;
-	Float		_geometryFalloffDist = 0.0;
-	C4D_Falloff	*_falloff = nullptr;
+	PROJECTORMODE	_mode;
+	Float		_offset;
+	Float		_blend;
+	Bool		_geometryFalloffEnabled;
+	Float		_geometryFalloffDist;
+	Float32			*_weightMap;
+	C4D_Falloff	*_falloff;
 	
-	wsPointProjectorParams()
+	wsPointProjectorParams() : _mode(PROJECTORMODE_PARALLEL), _offset(0.0), _blend(0.0), _geometryFalloffEnabled(false), _geometryFalloffDist(0.0), _weightMap(nullptr), _falloff(nullptr)
 	{ }
 	
-	wsPointProjectorParams(const Matrix &modifierMg, PROJECTORMODE mode, Float offset, Float blend, Bool geometryFalloffEnabled, Float geometryFalloffDist, C4D_Falloff *falloff = nullptr) : _modifierMg(modifierMg), _mode(mode), _offset(offset), _blend(blend), _geometryFalloffEnabled(geometryFalloffEnabled), _geometryFalloffDist(geometryFalloffDist), _falloff(falloff)
+	wsPointProjectorParams(const Matrix &modifierMg, PROJECTORMODE mode, Float offset, Float blend, Bool geometryFalloffEnabled, Float geometryFalloffDist, Float32 *weightMap = nullptr, C4D_Falloff *falloff = nullptr) : _modifierMg(modifierMg), _mode(mode), _offset(offset), _blend(blend), _geometryFalloffEnabled(geometryFalloffEnabled), _geometryFalloffDist(geometryFalloffDist), _weightMap(weightMap), _falloff(falloff)
 	{ }
 };
 
