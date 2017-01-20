@@ -6,7 +6,8 @@
 // Caller owns the pointed object
 Bool wsPointProjector::Init(PolygonObject *collisionObject, Bool force)
 {
-	if (!collisionObject) return false;
+	if (!collisionObject)
+		return false;
 	
 	// Check if RayCollider was allocated
 	if (!_collider)
@@ -42,6 +43,7 @@ Bool wsPointProjector::ProjectPosition(Vector &position, const Vector &rayDirect
 	if (_collider->Intersect(rPos, rDir, rayLength, false))
 	{
 		// Get collision result
+		// Return true if no intersection was found, as this is not a critical problem (the ray simply shot into the void, nothing happens)
 		if (!_collider->GetNearestIntersection(&collisionResult))
 			return true;
 		
@@ -67,10 +69,11 @@ Bool wsPointProjector::ProjectPosition(Vector &position, const Vector &rayDirect
 }
 
 // Iterate all points of op and project them onto _collisionObject
+// If wsPointProjectorParams::_falloff should be used, it must already be initialized!
 Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &params)
 {
 	if (!_initialized || !_collider || !_collisionObject || !op)
-		return FALSE;
+		return false;
 	
 	// Get point count
 	const Int32 pointCount = op->GetPointCount();
@@ -98,7 +101,7 @@ Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &pa
 	Vector rayDirection(DC);
 
 	// Calculate a ray length.
-	// The resulting length might be a bit too long, but with this we're on the safe side. No ray should ever be too short.
+	// The resulting length might be a bit too long, but with this we're on the safe side. No ray should ever be too shortto reach the collision geometry.
 	Float rayLength = (collisionObjectMg.off - opMg.off).GetLength() + _collisionObject->GetRad().GetSum()+ op->GetRad().GetSum();
 
 	// Iterate points
@@ -107,7 +110,7 @@ Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &pa
 		// Transform point position to global space
 		rayPosition = opMg * padr[i];
 		originalRayPosition = rayPosition;
-		
+
 		// Calculate ray direction for spherical projection
 		if (params._mode == PROJECTORMODE_SPHERICAL)
 		{
@@ -118,8 +121,9 @@ Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &pa
 			rayDirection = params._modifierMg.TransformVector(Vector(0.0, 0.0, 1.0));
 		}
 		
-		// Project point
-		ProjectPosition(rayPosition, rayDirection, rayLength, collisionObjectMg, collisionObjectMgI, params._offset, params._blend);
+		// Project point, cancel if critical error occurred
+		if (!ProjectPosition(rayPosition, rayDirection, rayLength, collisionObjectMg, collisionObjectMgI, params._offset, params._blend))
+			return false;
 		
 		// Geometry Falloff
 		if (params._geometryFalloffEnabled)
@@ -136,6 +140,15 @@ Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &pa
 			{
 				rayPosition = originalRayPosition;
 			}
+		}
+
+		// Falloff
+		if (params._falloff)
+		{
+			Float falloffResult = 1.0;
+			params._falloff->Sample(originalRayPosition, &falloffResult);
+			if (falloffResult < 1.0)
+				rayPosition = Blend(originalRayPosition, rayPosition, falloffResult);
 		}
 
 		// Transform point position back to op's local space
