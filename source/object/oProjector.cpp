@@ -10,12 +10,6 @@
 const Int32 ID_PROJECTOROBJECT = 1026403;
 
 
-// Macro used for checking if C4D_Falloff can be used
-// Only to be used in oProjector member functions!
-// It must be checked first if MoGraph can be used!
-#define FALLOFF_USABLE	(_falloff && _moGraphExists == 1)
-
-
 // Draw an arrow
 static void DrawArrow(BaseDraw *bd, const Vector &pos, Float length, Bool extra = false)
 {
@@ -66,7 +60,6 @@ class oProjector : public ObjectData
 private:
 	wsPointProjector	_projector;
 	UInt32						_lastlopdirty = 0;
-	Int32							_moGraphExists = NOTOK;
 	AutoAlloc<C4D_Falloff>	_falloff;
 	
 public:
@@ -101,25 +94,13 @@ Bool oProjector::Init(GeListNode *node)
 	bc->SetBool(PROJECTOR_GEOMFALLOFF_ENABLE, false);
 	bc->SetFloat(PROJECTOR_GEOMFALLOFF_DIST, 150.0);
 
-	// Check if MoGraph is registered
-	// If it's not, we can't offer Falloff support
-	// Only check once!
-	if (_moGraphExists == NOTOK)
-	{
-		if (FindPlugin(1018544, PLUGINTYPE_OBJECT))
-			_moGraphExists = 1;
-		else
-			_moGraphExists = 0;
-
-	}
-		
 	return SUPER::Init(node);
 }
 
 // Catch messages
 Bool oProjector::Message(GeListNode *node, Int32 type, void *data)
 {
-	if (!node)
+	if (!node || !_falloff)
 		return false;
 
 	BaseContainer *bc = (static_cast<BaseObject*>(node))->GetDataInstance();
@@ -131,12 +112,9 @@ Bool oProjector::Message(GeListNode *node, Int32 type, void *data)
 		(static_cast<BaseObject*>(node))->SetDeformMode(true);
 	}
 
-	if (FALLOFF_USABLE)
-	{
-		if (!_falloff->Message(type, bc, data))
-			return false;
-	}
-
+	if (!_falloff->Message(type, bc, data))
+		return false;
+	
 	return SUPER::Message(node, type, data);
 }
 
@@ -178,10 +156,9 @@ DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS drawpass, BaseDraw *bd, Bas
 			DrawStar(bd, Vector(0.0), 100.0);
 		}
 
-		if (FALLOFF_USABLE)
-		{
-			_falloff->Draw(bd, bh, drawpass, bc);
-		}
+
+		_falloff->Draw(bd, bh, drawpass, bc);
+
 	}
 	
 	bd->SetMatrix_Matrix(nullptr, Matrix());
@@ -192,8 +169,7 @@ DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS drawpass, BaseDraw *bd, Bas
 // Modify points of input object
 Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op, const Matrix &op_mg, const Matrix &mod_mg, Float lod, Int32 flags, BaseThread *thread)
 {
-	// Cancel if something's wrong
-	if (!op || !mod)
+	if (!op || !mod || !_falloff)
 		return false;
 	
 	if (!op->IsInstanceOf(Opoint))
@@ -216,22 +192,15 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 	Float geometryFalloffDist = bc->GetFloat(PROJECTOR_GEOMFALLOFF_DIST, 100.0);
 
 	// Initialize falloff
-	if (FALLOFF_USABLE)
-	{
-		if (!_falloff->InitFalloff(bc, doc, mod))
-			return false;
-	}
+	if (!_falloff->InitFalloff(bc, doc, mod))
+		return false;
 	
 	// Initialize projector
 	if (!_projector.Init(collisionObject))
 		return false;
 
 	// Parameters for projection
-	wsPointProjectorParams projectorParams;
-	if (FALLOFF_USABLE)
-		projectorParams = wsPointProjectorParams(mod->GetMg(), mode, offset, blend, geometryFalloffEnabled, geometryFalloffDist, _falloff);
-	else
-		projectorParams = wsPointProjectorParams(mod->GetMg(), mode, offset, blend, geometryFalloffEnabled, geometryFalloffDist, nullptr);
+	wsPointProjectorParams projectorParams(mod->GetMg(), mode, offset, blend, geometryFalloffEnabled, geometryFalloffDist, _falloff);
 	
 	// Perform projection
 	if(!_projector.Project(static_cast<PointObject*>(op), projectorParams))
@@ -287,21 +256,17 @@ void oProjector::CheckDirty(BaseObject *op, BaseDocument *doc)
 // Copy private data
 Bool oProjector::CopyTo(NodeData *dest, GeListNode *snode, GeListNode *dnode, COPYFLAGS flags, AliasTrans *trn)
 {
-	if (!dest)
+	if (!dest || !_falloff)
 		return false;
 	
 	oProjector* destNodeData = static_cast<oProjector*>(dest);
 	
 	// Copy members
 	destNodeData->_lastlopdirty = _lastlopdirty;
-	destNodeData->_moGraphExists = _moGraphExists;
 
 	// Copy falloff
-	if (FALLOFF_USABLE)
-	{
-		if (!_falloff->CopyTo(destNodeData->_falloff))
-			return false;
-	}
+	if (!_falloff->CopyTo(destNodeData->_falloff))
+		return false;
 
 	return SUPER::CopyTo(dest, snode, dnode, flags, trn);
 }
@@ -309,7 +274,7 @@ Bool oProjector::CopyTo(NodeData *dest, GeListNode *snode, GeListNode *dnode, CO
 // Load description and add Falloff elements
 Bool oProjector::GetDDescription(GeListNode *node, Description *description, DESCFLAGS_DESC &flags)
 {
-	if (!node || !description)
+	if (!node || !description || !_falloff)
 		return false;
 	
 	BaseObject *op = static_cast<BaseObject*>(node);
@@ -323,11 +288,8 @@ Bool oProjector::GetDDescription(GeListNode *node, Description *description, DES
 	flags |= DESCFLAGS_DESC_LOADED;
 
 	// Add falloff description
-	if (FALLOFF_USABLE)
-	{
-		if (!_falloff->AddFalloffToDescription(description, bc))
-			return false;
-	}
+	if (!_falloff->AddFalloffToDescription(description, bc))
+		return false;
 
 	return SUPER::GetDDescription(node, description, flags);
 }
@@ -339,15 +301,15 @@ Bool oProjector::GetDEnabling(GeListNode *node, const DescID &id, const GeData &
 		return false;
 	
 	BaseObject *op = static_cast<BaseObject*>(node);
-	BaseContainer *data = op->GetDataInstance();
-	if (!data)
+	BaseContainer *bc = op->GetDataInstance();
+	if (!bc)
 		return false;
 	
 	switch (id[0].id)
 	{
 			// General Settings
 		case PROJECTOR_GEOMFALLOFF_DIST:
-			return data->GetBool(PROJECTOR_GEOMFALLOFF_ENABLE, false);
+			return bc->GetBool(PROJECTOR_GEOMFALLOFF_ENABLE, false);
 	}
 	
 	return SUPER::GetDEnabling(node, id, t_data, flags, itemdesc);
