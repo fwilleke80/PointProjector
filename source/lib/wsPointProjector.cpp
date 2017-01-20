@@ -150,6 +150,14 @@ Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &pa
 			if (falloffResult < 1.0)
 				rayPosition = Blend(originalRayPosition, rayPosition, falloffResult);
 		}
+		
+		// Constrain weight map
+		if (params._weightMap)
+		{
+			Float32 weight = params._weightMap[i];
+			if (weight < 1.0)
+				rayPosition = Blend(originalRayPosition, rayPosition, weight);
+		}
 
 		// Transform point position back to op's local space
 		padr[i] = opMgI * rayPosition;
