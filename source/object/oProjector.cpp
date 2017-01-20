@@ -1,4 +1,5 @@
 #include "c4d.h"
+#include "c4d_falloffdata.h"
 #include "c4d_symbols.h"
 #include "oProjector.h"
 #include "wsPointProjector.h"
@@ -59,6 +60,7 @@ class oProjector : public ObjectData
 private:
 	wsPointProjector	_projector;
 	UInt32						_lastlopdirty = 0;
+	C4D_Falloff*			_falloff = nullptr;
 	
 public:
 	virtual Bool Init(GeListNode *node);
@@ -71,6 +73,11 @@ public:
 	virtual Bool GetDEnabling(GeListNode *node, const DescID &id,const GeData &t_data,DESCFLAGS_ENABLE flags,const BaseContainer *itemdesc);
 	
 	static NodeData *Alloc();
+
+	~oProjector()
+	{
+		C4D_Falloff::Free(_falloff);
+	}
 };
 
 
@@ -92,16 +99,35 @@ Bool oProjector::Init(GeListNode *node)
 	bc->SetBool(PROJECTOR_GEOMFALLOFF_ENABLE, false);
 	bc->SetFloat(PROJECTOR_GEOMFALLOFF_DIST, 150.0);
 
+	// Alloc falloff, if not already allocated
+	// Cancel if allocation fails
+	if (!_falloff)
+	{
+		_falloff = C4D_Falloff::Alloc();
+		if (!_falloff)
+			return false;
+	}
+
 	return SUPER::Init(node);
 }
 
 // Catch messages
 Bool oProjector::Message(GeListNode *node, Int32 type, void *data)
 {
+	if (!node || _falloff)
+		return false;
+
+	BaseContainer *bc = (static_cast<BaseObject*>(node))->GetDataInstance();
+	if (!bc)
+		return false;
+
 	if (type == MSG_MENUPREPARE)
 	{
 		(static_cast<BaseObject*>(node))->SetDeformMode(true);
 	}
+
+	if (!_falloff->Message(type, bc, data))
+		return false;
 	
 	return SUPER::Message(node, type, data);
 }
@@ -109,21 +135,21 @@ Bool oProjector::Message(GeListNode *node, Int32 type, void *data)
 // Draw visualization
 DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDrawHelp *bh)
 {
-	if (!op || !bd || !bh)
+	if (!op || !bd || !bh || !_falloff)
 		return DRAWRESULT_SKIP;
 	
 	if (type == DRAWPASS_OBJECT)
 	{
-		BaseContainer *data = op->GetDataInstance();
-		if (!data) return DRAWRESULT_OK;
+		BaseContainer *bc = op->GetDataInstance();
+		if (!bc) return DRAWRESULT_OK;
 
 		BaseDocument *doc = op->GetDocument();
 		if (!doc) return DRAWRESULT_OK;
 
-		BaseObject *lop = static_cast<BaseObject*>(data->GetObjectLink(PROJECTOR_LINK, doc));
+		BaseObject *lop = static_cast<BaseObject*>(bc->GetObjectLink(PROJECTOR_LINK, doc));
 		if (!lop) return DRAWRESULT_OK;
 		
-		PROJECTORMODE mode = (PROJECTORMODE)data->GetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
+		PROJECTORMODE mode = (PROJECTORMODE)bc->GetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
 
 		bd->SetMatrix_Matrix(op, bh->GetMg());
 		bd->SetPen(bd->GetObjectColor(bh, op));
@@ -139,6 +165,12 @@ DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDra
 		else
 		{
 			DrawStar(bd, Vector(0.0), 100.0);
+		}
+
+		if (_falloff->InitFalloff(bc, doc, op))
+		{
+			// Ignore the result of _falloff->Draw()
+			_falloff->Draw(bd, bh, type, bc);
 		}
 	}
 	
@@ -232,12 +264,17 @@ void oProjector::CheckDirty(BaseObject *op, BaseDocument *doc)
 // Copy private data
 Bool oProjector::CopyTo(NodeData *dest, GeListNode *snode, GeListNode *dnode, COPYFLAGS flags, AliasTrans *trn)
 {
-	if (!dest || !snode || !dnode)
+	if (!dest || !_falloff)
 		return false;
 	
-	oProjector* destNode = static_cast<oProjector*>(dest);
+	oProjector* destNodeData = static_cast<oProjector*>(dest);
 	
-	destNode->_lastlopdirty = _lastlopdirty;
+	// Copy members
+	destNodeData->_lastlopdirty = _lastlopdirty;
+
+	// Copy falloff
+	if (!_falloff->CopyTo(destNodeData->_falloff))
+		return false;
 	
 	return SUPER::CopyTo(dest, snode, dnode, flags, trn);
 }
@@ -245,7 +282,7 @@ Bool oProjector::CopyTo(NodeData *dest, GeListNode *snode, GeListNode *dnode, CO
 // Load description and add Falloff elements
 Bool oProjector::GetDDescription(GeListNode *node, Description *description, DESCFLAGS_DESC &flags)
 {
-	if (!node || !description)
+	if (!node || !description || !_falloff)
 		return false;
 	
 	BaseObject *op = static_cast<BaseObject*>(node);
@@ -257,6 +294,10 @@ Bool oProjector::GetDDescription(GeListNode *node, Description *description, DES
 		return false;
 
 	flags |= DESCFLAGS_DESC_LOADED;
+
+	// Add falloff description
+	if (!_falloff->AddFalloffToDescription(description, bc))
+		return false;
 
 	return SUPER::GetDDescription(node, description, flags);
 }
