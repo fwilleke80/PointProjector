@@ -60,7 +60,7 @@ class oProjector : public ObjectData
 private:
 	wsPointProjector	_projector;
 	UInt32						_lastlopdirty = 0;
-	C4D_Falloff*			_falloff = nullptr;
+	AutoAlloc<C4D_Falloff>	_falloff;
 	
 public:
 	virtual Bool Init(GeListNode *node);
@@ -73,11 +73,6 @@ public:
 	virtual Bool GetDEnabling(GeListNode *node, const DescID &id,const GeData &t_data,DESCFLAGS_ENABLE flags,const BaseContainer *itemdesc);
 	
 	static NodeData *Alloc();
-
-	~oProjector()
-	{
-		C4D_Falloff::Free(_falloff);
-	}
 };
 
 
@@ -98,15 +93,6 @@ Bool oProjector::Init(GeListNode *node)
 	bc->SetFloat(PROJECTOR_BLEND, 1.0);
 	bc->SetBool(PROJECTOR_GEOMFALLOFF_ENABLE, false);
 	bc->SetFloat(PROJECTOR_GEOMFALLOFF_DIST, 150.0);
-
-	// Alloc falloff, if not already allocated
-	// Cancel if allocation fails
-	if (!_falloff)
-	{
-		_falloff = C4D_Falloff::Alloc();
-		if (!_falloff)
-			return false;
-	}
 
 	return SUPER::Init(node);
 }
@@ -183,15 +169,15 @@ DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDra
 Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op, const Matrix &op_mg, const Matrix &mod_mg, Float lod, Int32 flags, BaseThread *thread)
 {
 	// Cancel if something's wrong
-	if (!op || !mod)
-		return true;
+	if (!op || !mod || !_falloff)
+		return false;
 	
 	if (!op->IsInstanceOf(Opoint))
 		return true;
 	
 	BaseContainer *bc = mod->GetDataInstance();
 	if (!bc)
-		return true;
+		return false;
 	
 	// Get collision object
 	PolygonObject *collisionObject = static_cast<PolygonObject*>(bc->GetObjectLink(PROJECTOR_LINK, doc));
@@ -204,19 +190,25 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 	Float blend = bc->GetFloat(PROJECTOR_BLEND, 1.0);
 	Bool geometryFalloffEnabled = bc->GetBool(PROJECTOR_GEOMFALLOFF_ENABLE, false);
 	Float geometryFalloffDist = bc->GetFloat(PROJECTOR_GEOMFALLOFF_DIST, 100.0);
+
+	// Initialize falloff
+	if (!_falloff->InitFalloff(bc, doc, mod))
+		return false;
 	
 	// Initialize projector
 	if (!_projector.Init(collisionObject))
 		return false;
 
 	// Parameters for projection
-	wsPointProjectorParams projectorParams(mod->GetMg(), mode, offset, blend, geometryFalloffEnabled, geometryFalloffDist);
+	wsPointProjectorParams projectorParams(mod->GetMg(), mode, offset, blend, geometryFalloffEnabled, geometryFalloffDist, _falloff);
 	
 	// Perform projection
-	if(!_projector.Project(static_cast<PointObject*>(op), projectorParams)) return true;
+	if(!_projector.Project(static_cast<PointObject*>(op), projectorParams))
+		return false;
 
 	// Send update message
-	mod->Message(MSG_UPDATE);
+	// TODO: Send MSG_UPDATE to modifier (mod) or to deformed object (op)? I think it must be op.
+	op->Message(MSG_UPDATE);
 
 	return true;
 }
