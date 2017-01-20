@@ -111,14 +111,6 @@ Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &pa
 		rayPosition = opMg * padr[i];
 		originalRayPosition = rayPosition;
 
-		// Falloff
-		Float falloffResult = 0.0;
-		if (params._falloff)
-		{
-			params._falloff->Sample(originalRayPosition, &falloffResult);
-		}
-		GePrint("Falloff sample at " + String::VectorToString(originalRayPosition) + ": " + String::FloatToString(falloffResult));
-		
 		// Calculate ray direction for spherical projection
 		if (params._mode == PROJECTORMODE_SPHERICAL)
 		{
@@ -148,6 +140,15 @@ Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &pa
 			{
 				rayPosition = originalRayPosition;
 			}
+		}
+
+		// Falloff
+		if (params._falloff)
+		{
+			Float falloffResult = 1.0;
+			params._falloff->Sample(originalRayPosition, &falloffResult);
+			if (falloffResult < 1.0)
+				rayPosition = Blend(originalRayPosition, rayPosition, falloffResult);
 		}
 
 		// Transform point position back to op's local space

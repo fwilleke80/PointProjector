@@ -10,6 +10,12 @@
 const Int32 ID_PROJECTOROBJECT = 1026403;
 
 
+// Macro used for checking if C4D_Falloff can be used
+// Only to be used in oProjector member functions!
+// It must be checked first if MoGraph can be used!
+#define FALLOFF_USABLE	(_falloff && _moGraphExists == 1)
+
+
 // Draw an arrow
 static void DrawArrow(BaseDraw *bd, const Vector &pos, Float length, Bool extra = false)
 {
@@ -60,18 +66,19 @@ class oProjector : public ObjectData
 private:
 	wsPointProjector	_projector;
 	UInt32						_lastlopdirty = 0;
+	Int32							_moGraphExists = NOTOK;
 	AutoAlloc<C4D_Falloff>	_falloff;
 	
 public:
 	virtual Bool Init(GeListNode *node);
 	virtual Bool Message(GeListNode *node, Int32 type, void *data);
-	virtual DRAWRESULT Draw(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDrawHelp *bh);
+	virtual DRAWRESULT Draw(BaseObject *op, DRAWPASS drawpass, BaseDraw *bd, BaseDrawHelp *bh);
 	virtual Bool ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op, const Matrix &op_mg, const Matrix &mod_mg, Float lod, Int32 flags, BaseThread *thread);
 	virtual void CheckDirty(BaseObject *op, BaseDocument *doc);
 	virtual Bool CopyTo(NodeData *dest, GeListNode *snode, GeListNode *dnode, COPYFLAGS flags, AliasTrans *trn);
 	virtual Bool GetDDescription(GeListNode *node, Description *description, DESCFLAGS_DESC &flags);
 	virtual Bool GetDEnabling(GeListNode *node, const DescID &id,const GeData &t_data,DESCFLAGS_ENABLE flags,const BaseContainer *itemdesc);
-	
+
 	static NodeData *Alloc();
 };
 
@@ -94,13 +101,25 @@ Bool oProjector::Init(GeListNode *node)
 	bc->SetBool(PROJECTOR_GEOMFALLOFF_ENABLE, false);
 	bc->SetFloat(PROJECTOR_GEOMFALLOFF_DIST, 150.0);
 
+	// Check if MoGraph is registered
+	// If it's not, we can't offer Falloff support
+	// Only check once!
+	if (_moGraphExists == NOTOK)
+	{
+		if (FindPlugin(1018544, PLUGINTYPE_OBJECT))
+			_moGraphExists = 1;
+		else
+			_moGraphExists = 0;
+
+	}
+		
 	return SUPER::Init(node);
 }
 
 // Catch messages
 Bool oProjector::Message(GeListNode *node, Int32 type, void *data)
 {
-	if (!node || _falloff)
+	if (!node)
 		return false;
 
 	BaseContainer *bc = (static_cast<BaseObject*>(node))->GetDataInstance();
@@ -112,28 +131,34 @@ Bool oProjector::Message(GeListNode *node, Int32 type, void *data)
 		(static_cast<BaseObject*>(node))->SetDeformMode(true);
 	}
 
-	if (!_falloff->Message(type, bc, data))
-		return false;
-	
+	if (FALLOFF_USABLE)
+	{
+		if (!_falloff->Message(type, bc, data))
+			return false;
+	}
+
 	return SUPER::Message(node, type, data);
 }
 
 // Draw visualization
-DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDrawHelp *bh)
+DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS drawpass, BaseDraw *bd, BaseDrawHelp *bh)
 {
-	if (!op || !bd || !bh || !_falloff)
+	if (!op || !bd || !bh)
 		return DRAWRESULT_SKIP;
 	
-	if (type == DRAWPASS_OBJECT)
+	if (drawpass == DRAWPASS_OBJECT)
 	{
 		BaseContainer *bc = op->GetDataInstance();
-		if (!bc) return DRAWRESULT_OK;
+		if (!bc)
+			return DRAWRESULT_OK;
 
 		BaseDocument *doc = op->GetDocument();
-		if (!doc) return DRAWRESULT_OK;
+		if (!doc)
+			return DRAWRESULT_OK;
 
 		BaseObject *lop = static_cast<BaseObject*>(bc->GetObjectLink(PROJECTOR_LINK, doc));
-		if (!lop) return DRAWRESULT_OK;
+		if (!lop)
+			return DRAWRESULT_OK;
 		
 		PROJECTORMODE mode = (PROJECTORMODE)bc->GetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
 
@@ -153,23 +178,22 @@ DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDra
 			DrawStar(bd, Vector(0.0), 100.0);
 		}
 
-		if (_falloff->InitFalloff(bc, doc, op))
+		if (FALLOFF_USABLE)
 		{
-			// Ignore the result of _falloff->Draw()
-			_falloff->Draw(bd, bh, type, bc);
+			_falloff->Draw(bd, bh, drawpass, bc);
 		}
 	}
 	
 	bd->SetMatrix_Matrix(nullptr, Matrix());
 	
-	return DRAWRESULT_OK;
+	return SUPER::Draw(op, drawpass, bd, bh);
 }
 
 // Modify points of input object
 Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op, const Matrix &op_mg, const Matrix &mod_mg, Float lod, Int32 flags, BaseThread *thread)
 {
 	// Cancel if something's wrong
-	if (!op || !mod || !_falloff)
+	if (!op || !mod)
 		return false;
 	
 	if (!op->IsInstanceOf(Opoint))
@@ -192,15 +216,22 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 	Float geometryFalloffDist = bc->GetFloat(PROJECTOR_GEOMFALLOFF_DIST, 100.0);
 
 	// Initialize falloff
-	if (!_falloff->InitFalloff(bc, doc, mod))
-		return false;
+	if (FALLOFF_USABLE)
+	{
+		if (!_falloff->InitFalloff(bc, doc, mod))
+			return false;
+	}
 	
 	// Initialize projector
 	if (!_projector.Init(collisionObject))
 		return false;
 
 	// Parameters for projection
-	wsPointProjectorParams projectorParams(mod->GetMg(), mode, offset, blend, geometryFalloffEnabled, geometryFalloffDist, _falloff);
+	wsPointProjectorParams projectorParams;
+	if (FALLOFF_USABLE)
+		projectorParams = wsPointProjectorParams(mod->GetMg(), mode, offset, blend, geometryFalloffEnabled, geometryFalloffDist, _falloff);
+	else
+		projectorParams = wsPointProjectorParams(mod->GetMg(), mode, offset, blend, geometryFalloffEnabled, geometryFalloffDist, nullptr);
 	
 	// Perform projection
 	if(!_projector.Project(static_cast<PointObject*>(op), projectorParams))
@@ -263,11 +294,15 @@ Bool oProjector::CopyTo(NodeData *dest, GeListNode *snode, GeListNode *dnode, CO
 	
 	// Copy members
 	destNodeData->_lastlopdirty = _lastlopdirty;
+	destNodeData->_moGraphExists = _moGraphExists;
 
 	// Copy falloff
-	if (!_falloff->CopyTo(destNodeData->_falloff))
-		return false;
-	
+	if (FALLOFF_USABLE)
+	{
+		if (!_falloff->CopyTo(destNodeData->_falloff))
+			return false;
+	}
+
 	return SUPER::CopyTo(dest, snode, dnode, flags, trn);
 }
 
@@ -288,8 +323,11 @@ Bool oProjector::GetDDescription(GeListNode *node, Description *description, DES
 	flags |= DESCFLAGS_DESC_LOADED;
 
 	// Add falloff description
-	if (!_falloff->AddFalloffToDescription(description, bc))
-		return false;
+	if (FALLOFF_USABLE)
+	{
+		if (!_falloff->AddFalloffToDescription(description, bc))
+			return false;
+	}
 
 	return SUPER::GetDDescription(node, description, flags);
 }
