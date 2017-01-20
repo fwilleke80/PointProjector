@@ -77,7 +77,7 @@ public:
 // Initialize node
 Bool oProjector::Init(GeListNode *node)
 {
-	BaseObject *op   = (BaseObject*)node;
+	BaseObject *op = static_cast<BaseObject*>(node);
 	if (!op)
 		return false;
 	
@@ -91,7 +91,7 @@ Bool oProjector::Init(GeListNode *node)
 	bc->SetFloat(PROJECTOR_BLEND, 1.0);
 	bc->SetBool(PROJECTOR_GEOMFALLOFF_ENABLE, false);
 	bc->SetFloat(PROJECTOR_GEOMFALLOFF_DIST, 150.0);
-	
+
 	return SUPER::Init(node);
 }
 
@@ -100,7 +100,7 @@ Bool oProjector::Message(GeListNode *node, Int32 type, void *data)
 {
 	if (type == MSG_MENUPREPARE)
 	{
-		((BaseObject*)node)->SetDeformMode(true);
+		(static_cast<BaseObject*>(node))->SetDeformMode(true);
 	}
 	
 	return SUPER::Message(node, type, data);
@@ -120,7 +120,7 @@ DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS type, BaseDraw *bd, BaseDra
 		BaseDocument *doc = op->GetDocument();
 		if (!doc) return DRAWRESULT_OK;
 
-		BaseObject *lop = (BaseObject*)data->GetObjectLink(PROJECTOR_LINK, doc);
+		BaseObject *lop = static_cast<BaseObject*>(data->GetObjectLink(PROJECTOR_LINK, doc));
 		if (!lop) return DRAWRESULT_OK;
 		
 		PROJECTORMODE mode = (PROJECTORMODE)data->GetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
@@ -181,7 +181,7 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 	wsPointProjectorParams projectorParams(mod->GetMg(), mode, offset, blend, geometryFalloffEnabled, geometryFalloffDist);
 	
 	// Perform projection
-	if(!_projector.Project((PointObject*)op, projectorParams)) return true;
+	if(!_projector.Project(static_cast<PointObject*>(op), projectorParams)) return true;
 
 	// Send update message
 	mod->Message(MSG_UPDATE);
@@ -202,7 +202,7 @@ void oProjector::CheckDirty(BaseObject *op, BaseDocument *doc)
 	UInt32 dirtyness = 0;
 
 	// Get linked object
-	BaseObject *collisionObject = (BaseObject*)bc->GetLink(PROJECTOR_LINK, doc, Obase);
+	BaseObject *collisionObject = static_cast<BaseObject*>(bc->GetObjectLink(PROJECTOR_LINK, doc));
 	if (!collisionObject)
 		return;
 
@@ -257,7 +257,7 @@ Bool oProjector::GetDDescription(GeListNode *node, Description *description, DES
 		return false;
 
 	flags |= DESCFLAGS_DESC_LOADED;
-	
+
 	return SUPER::GetDDescription(node, description, flags);
 }
 
@@ -267,7 +267,7 @@ Bool oProjector::GetDEnabling(GeListNode *node, const DescID &id, const GeData &
 	if (!node)
 		return false;
 	
-	BaseObject *op = (BaseObject*)node;
+	BaseObject *op = static_cast<BaseObject*>(node);
 	BaseContainer *data = op->GetDataInstance();
 	if (!data)
 		return false;
