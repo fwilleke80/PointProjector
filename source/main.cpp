@@ -4,7 +4,7 @@
 #include "main.h"
 
 
-#define PLUGIN_NAME "PointProjector 1.4"
+#define PLUGIN_NAME "PointProjector 1.4.1"
 
 
 Bool PluginStart()
