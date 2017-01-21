@@ -47,7 +47,7 @@ public:
 	void	Clear();
 	
 	Bool	ProjectPosition(Vector &position, const Vector &rayDirection, Float rayLength, const Matrix &collisionObjectMg, const Matrix &collisionObjectMgI, Float offset = 0.0, Float blend = 0.0);
-	Bool	Project(PointObject *op, const wsPointProjectorParams &params);
+	Bool	Project(PointObject *op, const wsPointProjectorParams &params, BaseThread *thread = nullptr);
 	
 	wsPointProjector() : _collisionObject(nullptr), _initialized(false)
 	{ }

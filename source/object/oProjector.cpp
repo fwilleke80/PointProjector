@@ -207,7 +207,7 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 	wsPointProjectorParams projectorParams(mod->GetMg(), mode, offset, blend, geometryFalloffEnabled, geometryFalloffDist, weightMap, _falloff);
 	
 	// Perform projection
-	if(!_projector.Project(static_cast<PointObject*>(op), projectorParams))
+	if (!_projector.Project(static_cast<PointObject*>(op), projectorParams, thread))
 		return false;
 
 	// Send update message

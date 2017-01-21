@@ -70,7 +70,7 @@ Bool wsPointProjector::ProjectPosition(Vector &position, const Vector &rayDirect
 
 // Iterate all points of op and project them onto _collisionObject
 // If wsPointProjectorParams::_falloff should be used, it must already be initialized!
-Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &params)
+Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &params, BaseThread *thread)
 {
 	if (!_initialized || !_collider || !_collisionObject || !op)
 		return false;
@@ -107,6 +107,10 @@ Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &pa
 	// Iterate points
 	for (Int32 i = 0; i < pointCount; i++)
 	{
+		// Check if procesing should be cancelled
+		if (thread && !(i & 63) && thread->TestBreak())
+			break;
+
 		// Transform point position to global space
 		rayPosition = opMg * padr[i];
 		originalRayPosition = rayPosition;
