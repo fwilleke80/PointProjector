@@ -1,3 +1,6 @@
+1.4.1
+- Optimizations
+
 1.4
 - Added support for Restriction Tag
 - New icon
