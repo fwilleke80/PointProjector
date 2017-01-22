@@ -29,9 +29,6 @@ Bool PluginMessage(Int32 id, void *data)
 			if (!resource.Init())
 				return false; // don't start plugin without resource
 			return true;
-
-		case C4DMSG_PRIORITY: 
-			return true;
 	}
 
 	return false;
