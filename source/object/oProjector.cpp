@@ -62,6 +62,30 @@ static void DrawStar(BaseDraw *bd, const Vector &pos, Float size)
 	bd->DrawLine(Vector(size2, -size2, -size2), Vector(-size2, size2, size2), 0);
 }
 
+/// Get the actual geometry from an object
+/// @param op The object to get the actual geometry from
+/// @return The actual geometry. Cinema owns the pointed object.
+static PolygonObject* GetRealGeometry(BaseObject* op)
+{
+	if (!op && !op->IsInstanceOf(Opolygon))
+		return nullptr;
+	
+	if (op->GetDeformCache())
+	{
+		GePrint("return GetDeformCache()");
+		return static_cast<PolygonObject*>(op->GetDeformCache());
+	}
+	
+	if (op->GetCache())
+	{
+		GePrint("return GetCache()");
+		return static_cast<PolygonObject*>(op->GetCache());
+	}
+	
+	GePrint("return op");
+	return static_cast<PolygonObject*>(op);
+}
+
 
 /// Object plugin class
 /// This implements the Projector object inside Cinema 4D
@@ -203,7 +227,8 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 		return false;
 	
 	// Get collision object
-	PolygonObject *collisionObject = static_cast<PolygonObject*>(bc->GetObjectLink(PROJECTOR_LINK, doc));
+	//PolygonObject *collisionObject = static_cast<PolygonObject*>(bc->GetObjectLink(PROJECTOR_LINK, doc));
+	PolygonObject* collisionObject = GetRealGeometry(bc->GetObjectLink(PROJECTOR_LINK, doc));
 	if (!collisionObject)
 		return true;
 
@@ -215,7 +240,6 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 	Float geometryFalloffDist = bc->GetFloat(PROJECTOR_GEOMFALLOFF_DIST, 100.0);
 	
 	// Calculate weight map from vertex maps linked in restriction tag
-	// TODO: Call CalcVertexMap() only if any of the linked vertex map tags has changed since the last time
 	Float32* weightMap = nullptr;
 	weightMap = ToPoint(op)->CalcVertexMap(mod);
 
