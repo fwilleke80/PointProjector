@@ -6,7 +6,6 @@
 #include "main.h"
 
 
-// Unique plugin ID from www.plugincafe.com
 const Int32 ID_PROJECTOROBJECT = 1026403;	///< PointProjector plugin ID
 
 
@@ -257,7 +256,7 @@ void oProjector::CheckDirty(BaseObject *op, BaseDocument *doc)
 	if (!bc)
 		return;
 	
-	// We'll sum up all the dirty checksums or participating objects here
+	// We'll sum up all the dirty checksums of participating objects here
 	UInt32 dirtyness = 0;
 
 	// Get linked collision object
