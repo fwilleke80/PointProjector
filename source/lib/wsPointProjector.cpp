@@ -2,31 +2,31 @@
 #include "wsPointProjector.h"
 
 
-// Initialize Projector with op as collision geometry
-// Caller owns the pointed object
 Bool wsPointProjector::Init(PolygonObject *collisionObject, Bool force)
 {
+	// If no collisionObject was passed, abort initialization
 	if (!collisionObject)
-		return false;
+		goto InitUnsuccessful;
 	
 	// Check if RayCollider was allocated
 	if (!_collider)
-		goto ErrorHandler;
+		goto InitUnsuccessful;
 	
 	// Initialize RayCollider
 	_collisionObject = collisionObject;
 	if (!_collider->Init(_collisionObject, force))
-		goto ErrorHandler;
+		goto InitUnsuccessful;
 	
+	// Everything went fine
 	_initialized = true;
 	return true;
 	
-ErrorHandler:
+InitUnsuccessful:
+	// Something went wrong
 	_initialized = false;
 	return false;
 }
 
-// Project a single point (expects all positions and directions in global space)
 Bool wsPointProjector::ProjectPosition(Vector &position, const Vector &rayDirection, Float rayLength, const Matrix &collisionObjectMg, const Matrix &collisionObjectMgI, Float offset, Float blend)
 {
 	if (!_initialized || !_collider || !_collisionObject)
@@ -68,16 +68,14 @@ Bool wsPointProjector::ProjectPosition(Vector &position, const Vector &rayDirect
 	return true;
 }
 
-// Iterate all points of op and project them onto _collisionObject
-// If wsPointProjectorParams::_falloff should be used, it must already be initialized!
-Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &params)
+Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &params, BaseThread *thread)
 {
 	if (!_initialized || !_collider || !_collisionObject || !op)
 		return false;
 	
 	// Get point count
 	const Int32 pointCount = op->GetPointCount();
-	if (pointCount <= 0)
+	if (pointCount == 0)
 		return false;
 	
 	// Get writable point array
@@ -93,48 +91,63 @@ Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &pa
 	const Matrix collisionObjectMgI = ~collisionObjectMg;
 	const Matrix opMgI = ~opMg;
 	
-	// Ray position in gobal space
+	// Ray position in gobal space. Don't construct yet (DC), they will be receiving values soon enough.
 	Vector rayPosition(DC);
 	Vector originalRayPosition(DC);
 	
-	// Ray direction in global space
+	// Ray direction in global space Don't construct yet (DC), it will be receiving a value soon enough.
 	Vector rayDirection(DC);
-
+	
+	// If using parallel projection, calculate rayDirection now, as it's the same for all points
+	if (params._mode == PROJECTORMODE_PARALLEL)
+	{
+		// Direction points along the modifier's Z axis
+		rayDirection = params._modifierMg.v3;
+	}
+	
 	// Calculate a ray length.
-	// The resulting length might be a bit too long, but with this we're on the safe side. No ray should ever be too shortto reach the collision geometry.
+	// The resulting length might be a bit too long, but with this we're on the safe side. No ray should ever be too short to reach the collision geometry.
 	Float rayLength = (collisionObjectMg.off - opMg.off).GetLength() + _collisionObject->GetRad().GetSum()+ op->GetRad().GetSum();
 
 	// Iterate points
 	for (Int32 i = 0; i < pointCount; i++)
 	{
+		// Check if procesing should be cancelled
+		if (thread && !(i & 63) && thread->TestBreak())
+			break;
+
 		// Transform point position to global space
 		rayPosition = opMg * padr[i];
 		originalRayPosition = rayPosition;
 
 		// Calculate ray direction for spherical projection
+		// This needs to be done inside the loop, as the direction is different for each point
 		if (params._mode == PROJECTORMODE_SPHERICAL)
 		{
+			// Direction points from the modifier to the position of the point
 			rayDirection = rayPosition - params._modifierMg.off;
-		}
-		else
-		{
-			rayDirection = params._modifierMg.TransformVector(Vector(0.0, 0.0, 1.0));
 		}
 		
 		// Project point, cancel if critical error occurred
 		if (!ProjectPosition(rayPosition, rayDirection, rayLength, collisionObjectMg, collisionObjectMgI, params._offset, params._blend))
 			return false;
 		
-		// Geometry Falloff
+		// Calculate geometry falloff
 		if (params._geometryFalloffEnabled)
 		{
+			// Square the falloff distance
 			Float maxDistSquared = params._geometryFalloffDist * params._geometryFalloffDist;
+			
+			// Get squared length vector from original ray position to resulting ray position
+			// We're using squared distances here, to avoid calculate expensive square roots
 			Float distanceSquared = (rayPosition - originalRayPosition).GetSquaredLength();
 			
+			// If within falloff range
 			if (distanceSquared < maxDistSquared)
 			{
-				Float mixVal = Smoothstep(0.0, maxDistSquared, distanceSquared);
-				rayPosition = Blend(rayPosition, originalRayPosition, mixVal);
+				// Calculate blend value using a smooth step interpolation
+				Float blendVal = Smoothstep(0.0, maxDistSquared, distanceSquared);
+				rayPosition = Blend(rayPosition, originalRayPosition, blendVal);
 			}
 			else
 			{
@@ -142,19 +155,25 @@ Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &pa
 			}
 		}
 
-		// Falloff
+		// Evaluate falloff
 		if (params._falloff)
 		{
+			// Sample falloff value at original position
 			Float falloffResult = 1.0;
 			params._falloff->Sample(originalRayPosition, &falloffResult);
+			
+			// Only perform blending if necessary
 			if (falloffResult < 1.0)
 				rayPosition = Blend(originalRayPosition, rayPosition, falloffResult);
 		}
 		
-		// Constrain weight map
+		// Evaluate eight map
 		if (params._weightMap)
 		{
+			// Get weight value for this point form map
 			Float32 weight = params._weightMap[i];
+			
+			// Only perform blending if necessary
 			if (weight < 1.0)
 				rayPosition = Blend(originalRayPosition, rayPosition, weight);
 		}

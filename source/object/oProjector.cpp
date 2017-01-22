@@ -7,23 +7,30 @@
 
 
 // Unique plugin ID from www.plugincafe.com
-const Int32 ID_PROJECTOROBJECT = 1026403;
+const Int32 ID_PROJECTOROBJECT = 1026403;	///< PointProjector plugin ID
 
 
-// Draw an arrow
+/// Draw an arrow
+/// @param bd Pointer to BaseDraw
+/// @param pos Position of the arrow in global space
+/// @param length Length of the arrow
+/// @param extra Draw some more pointy lines
 static void DrawArrow(BaseDraw *bd, const Vector &pos, Float length, Bool extra = false)
 {
-	if (!bd || length == 0.0) return;
+	// Good practice: Always check if required pointers are set, or if we need to draw anything at all
+	if (!bd || length == 0.0)
+		return;
 	
-	// Precalculate some values
+	// Precalculate some values we'll need a lot
 	const Float length025 = length * 0.25;
 	const Float length125 = length * 0.125;
 	const Vector tip = pos + Vector(0.0, 0.0, length);
 
 	bd->DrawLine(pos, tip, 0);	// Main line
-	bd->DrawLine(tip, tip + Vector(length125, 0.0, -length025), 0);
-	bd->DrawLine(tip, tip + Vector(-length125, 0.0, -length025), 0);
+	bd->DrawLine(tip, tip + Vector(length125, 0.0, -length025), 0);		// Pointy line
+	bd->DrawLine(tip, tip + Vector(-length125, 0.0, -length025), 0);	// Pointy line
 
+	// Draw even more pointy lines
 	if (extra)
 	{
 		bd->DrawLine(tip, tip + Vector(0.0, length125, -length025), 0);
@@ -31,13 +38,18 @@ static void DrawArrow(BaseDraw *bd, const Vector &pos, Float length, Bool extra 
 	}
 }
 
-// Draw a star
-static void DrawStar(BaseDraw *bd,const Vector &pos, Float size)
+/// Draw a star
+/// @param bd Pointer to BaseDraw
+/// @param pos position of the star in global space
+/// @param size Size of the star
+static void DrawStar(BaseDraw *bd, const Vector &pos, Float size)
 {
-	if (!bd || size <= 0.0) return;
+	// Good practice: Always check if required pointers are set, or if we need to draw anything at all
+	if (!bd || size <= 0.0)
+		return;
 	
+	// Precalculate this value, we'll need it a lot
 	const Float size2 = size * 0.7;
-	
 	
 	// Straight lines
 	bd->DrawLine(Vector(0.0, -size, 0.0), Vector(0.0, size, 0.0), 0);
@@ -52,15 +64,16 @@ static void DrawStar(BaseDraw *bd,const Vector &pos, Float size)
 }
 
 
-// Object plugin class
+/// Object plugin class
+/// This implements the Projector object inside Cinema 4D
 class oProjector : public ObjectData
 {
 	INSTANCEOF(oProjector, ObjectData)
 	
 private:
-	wsPointProjector	_projector;
-	UInt32						_lastlopdirty = 0;
-	AutoAlloc<C4D_Falloff>	_falloff;
+	wsPointProjector	_projector;					///< Projector object that does all the work for us (and nicely separates the projection code from the Deformer/Object code)
+	UInt32						_lastlopdirty = 0;	///< Used to store the last retreived dirty checksum for later comparison
+	AutoAlloc<C4D_Falloff>	_falloff;			///< Provides the functions needed to support falloffs
 	
 public:
 	virtual Bool Init(GeListNode *node);
@@ -70,7 +83,7 @@ public:
 	virtual void CheckDirty(BaseObject *op, BaseDocument *doc);
 	virtual Bool CopyTo(NodeData *dest, GeListNode *snode, GeListNode *dnode, COPYFLAGS flags, AliasTrans *trn);
 	virtual Bool GetDDescription(GeListNode *node, Description *description, DESCFLAGS_DESC &flags);
-	virtual Bool GetDEnabling(GeListNode *node, const DescID &id,const GeData &t_data,DESCFLAGS_ENABLE flags,const BaseContainer *itemdesc);
+	virtual Bool GetDEnabling(GeListNode *node, const DescID &id, const GeData &t_data, DESCFLAGS_ENABLE flags, const BaseContainer *itemdesc);
 
 	static NodeData *Alloc();
 };
@@ -79,15 +92,17 @@ public:
 // Initialize node
 Bool oProjector::Init(GeListNode *node)
 {
+	// Get BaseObject
 	BaseObject *op = static_cast<BaseObject*>(node);
 	if (!op)
 		return false;
 	
+	// Get container, we want to set some data here
 	BaseContainer *bc = op->GetDataInstance();
 	if (!bc)
 		return false;
 	
-	// Init projection mode attribute
+	// Init projection mode attributes
 	bc->SetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
 	bc->SetFloat(PROJECTOR_OFFSET, 0.0);
 	bc->SetFloat(PROJECTOR_BLEND, 1.0);
@@ -100,6 +115,7 @@ Bool oProjector::Init(GeListNode *node)
 // Catch messages
 Bool oProjector::Message(GeListNode *node, Int32 type, void *data)
 {
+	// Good practice: Always check if all required pointers are set
 	if (!node || !_falloff)
 		return false;
 
@@ -107,11 +123,13 @@ Bool oProjector::Message(GeListNode *node, Int32 type, void *data)
 	if (!bc)
 		return false;
 
+	// Enable the deformer object
 	if (type == MSG_MENUPREPARE)
 	{
 		(static_cast<BaseObject*>(node))->SetDeformMode(true);
 	}
 
+	// Forward messages to the falloff, it might need them
 	if (!_falloff->Message(type, bc, data))
 		return false;
 	
@@ -121,29 +139,32 @@ Bool oProjector::Message(GeListNode *node, Int32 type, void *data)
 // Draw visualization
 DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS drawpass, BaseDraw *bd, BaseDrawHelp *bh)
 {
+	// Good practice: Always check if all required pointers are set
 	if (!op || !bd || !bh)
 		return DRAWRESULT_SKIP;
 	
 	if (drawpass == DRAWPASS_OBJECT)
 	{
+		// Get container, skip if that doesn't work (actually, if this doesn'T work, something is really wrong!)
 		BaseContainer *bc = op->GetDataInstance();
 		if (!bc)
-			return DRAWRESULT_OK;
+			return DRAWRESULT_SKIP;
 
+		// Get document, skip if no document set
 		BaseDocument *doc = op->GetDocument();
 		if (!doc)
 			return DRAWRESULT_OK;
 
-		BaseObject *lop = static_cast<BaseObject*>(bc->GetObjectLink(PROJECTOR_LINK, doc));
-		if (!lop)
-			return DRAWRESULT_OK;
-		
-		PROJECTORMODE mode = (PROJECTORMODE)bc->GetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
-
+		// Set draw matrix
 		bd->SetMatrix_Matrix(op, bh->GetMg());
+		
+		// Set draw color
 		bd->SetPen(bd->GetObjectColor(bh, op));
 
-		// Draw arrows
+		// Get projector mode
+		PROJECTORMODE mode = (PROJECTORMODE)bc->GetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
+		
+		// Draw arrows in parallel mode, or star in spherical mode
 		if (mode == PROJECTORMODE_PARALLEL)
 		{
 			DrawArrow(bd, Vector(50.0, 0.0, 0.0), 100.0, true);
@@ -156,11 +177,11 @@ DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS drawpass, BaseDraw *bd, Bas
 			DrawStar(bd, Vector(0.0), 100.0);
 		}
 
-
+		// Let the falloff draw itself, too
 		_falloff->Draw(bd, bh, drawpass, bc);
-
 	}
 	
+	// Reset draw matrix, so we don't screw up successive draw calls
 	bd->SetMatrix_Matrix(nullptr, Matrix());
 	
 	return SUPER::Draw(op, drawpass, bd, bh);
@@ -169,12 +190,15 @@ DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS drawpass, BaseDraw *bd, Bas
 // Modify points of input object
 Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op, const Matrix &op_mg, const Matrix &mod_mg, Float lod, Int32 flags, BaseThread *thread)
 {
+	// Good practice: Always check if all required pointers are set
 	if (!op || !mod || !_falloff)
 		return false;
 	
+	// Don't continue if op is not a PointObject
 	if (!op->IsInstanceOf(Opoint))
 		return true;
 	
+	// Get modifier's container, we need to read the parameters from it
 	BaseContainer *bc = mod->GetDataInstance();
 	if (!bc)
 		return false;
@@ -191,7 +215,8 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 	Bool geometryFalloffEnabled = bc->GetBool(PROJECTOR_GEOMFALLOFF_ENABLE, false);
 	Float geometryFalloffDist = bc->GetFloat(PROJECTOR_GEOMFALLOFF_DIST, 100.0);
 	
-	// Weight Vertex Map
+	// Calculate weight map from vertex maps linked in restriction tag
+	// TODO: Call CalcVertexMap() only if any of the linked vertex map tags has changed since the last time
 	Float32* weightMap = nullptr;
 	weightMap = ToPoint(op)->CalcVertexMap(mod);
 
@@ -207,52 +232,64 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 	wsPointProjectorParams projectorParams(mod->GetMg(), mode, offset, blend, geometryFalloffEnabled, geometryFalloffDist, weightMap, _falloff);
 	
 	// Perform projection
-	if(!_projector.Project(static_cast<PointObject*>(op), projectorParams))
+	if (!_projector.Project(static_cast<PointObject*>(op), projectorParams, thread))
 		return false;
+	
+	// Free weight map (important! Otherwise the memory fills up rather quickly)
+	DeleteMem(weightMap);
 
-	// Send update message
-	// TODO: Send MSG_UPDATE to modifier (mod) or to deformed object (op)? I think it must be op.
+	// The object was probably deformed, so send update message
 	op->Message(MSG_UPDATE);
 
 	return true;
 }
 
 // Check if modifier or linked object have been changed in any way
+// If so, set the modifier dirty, which will trigger a recalculation
 void oProjector::CheckDirty(BaseObject *op, BaseDocument *doc)
 {
+	// Good practice: Always check if all required pointers are set
 	if (!op || !doc)
 		return;
 
+	// Get modifier's container, we need to read the parameters from it
 	BaseContainer *bc = op->GetDataInstance();
 	if (!bc)
 		return;
 	
+	// We'll sum up all the dirty checksums or participating objects here
 	UInt32 dirtyness = 0;
 
-	// Get linked object
+	// Get linked collision object
 	BaseObject *collisionObject = static_cast<BaseObject*>(bc->GetObjectLink(PROJECTOR_LINK, doc));
 	if (!collisionObject)
 		return;
 
-	// Check for linked object's (or its parents') dirtyness
+	// Iterate collision object and its parents, and add their dirty checksums
 	while (collisionObject)
 	{
 		dirtyness += collisionObject->GetDirty(DIRTYFLAGS_MATRIX|DIRTYFLAGS_DATA);
 		collisionObject = collisionObject->GetUp();
 	}
 
-	// Check for modifier's (or its parents') dirtyness
-	BaseObject *parentObject = op;
+	// Iterate modifier's parents and add their dirty checksums
+	BaseObject *parentObject = op->GetUp();
 	while (parentObject)
 	{
 		dirtyness += parentObject->GetDirty(DIRTYFLAGS_MATRIX|DIRTYFLAGS_DATA);
 		parentObject = parentObject->GetUp();
 	}
+	
+	//  Add modifier's dirty checksum
+	dirtyness += op->GetDirty(DIRTYFLAGS_MATRIX|DIRTYFLAGS_DATA);
 
-	// Compare dirtyness to previous dirtyness, set modifier dirty if necessary
+	// Compare dirty checksum to previous one, set modifier dirty if necessary
 	if (dirtyness != _lastlopdirty + 1)
 	{
+		// Store dirty checksum for next comparison
 		_lastlopdirty = dirtyness;
+		
+		// Set modifier dirty. It will be recalculated.
 		op->SetDirty(DIRTYFLAGS_DATA);
 	}
 }
@@ -260,9 +297,11 @@ void oProjector::CheckDirty(BaseObject *op, BaseDocument *doc)
 // Copy private data
 Bool oProjector::CopyTo(NodeData *dest, GeListNode *snode, GeListNode *dnode, COPYFLAGS flags, AliasTrans *trn)
 {
+	// Good practice: Always check if all required pointers are set
 	if (!dest || !_falloff)
 		return false;
 	
+	// Cast to oProjector, otherwise we can't access the members
 	oProjector* destNodeData = static_cast<oProjector*>(dest);
 	
 	// Copy members
@@ -278,17 +317,21 @@ Bool oProjector::CopyTo(NodeData *dest, GeListNode *snode, GeListNode *dnode, CO
 // Load description and add Falloff elements
 Bool oProjector::GetDDescription(GeListNode *node, Description *description, DESCFLAGS_DESC &flags)
 {
+	// Good practice: Always check if all required pointers are set
 	if (!node || !description || !_falloff)
 		return false;
 	
+	// Get BaseObject and its container
 	BaseObject *op = static_cast<BaseObject*>(node);
 	BaseContainer *bc = op->GetDataInstance();
 	if (!bc)
 		return false;
 	
+	// Cancel if description wasn't loaded correctly
 	if (!description->LoadDescription(op->GetType()))
 		return false;
 
+	// Signalize the description has been loaded successfully
 	flags |= DESCFLAGS_DESC_LOADED;
 
 	// Add falloff description
@@ -301,9 +344,11 @@ Bool oProjector::GetDDescription(GeListNode *node, Description *description, DES
 // Enable and disable ('gray out') user controls
 Bool oProjector::GetDEnabling(GeListNode *node, const DescID &id, const GeData &t_data, DESCFLAGS_ENABLE flags, const BaseContainer *itemdesc)
 {
+	// Good practice: Always check if all required pointers are set
 	if (!node)
 		return false;
 	
+	// Get BaseObject and its container
 	BaseObject *op = static_cast<BaseObject*>(node);
 	BaseContainer *bc = op->GetDataInstance();
 	if (!bc)
@@ -311,7 +356,7 @@ Bool oProjector::GetDEnabling(GeListNode *node, const DescID &id, const GeData &
 	
 	switch (id[0].id)
 	{
-			// General Settings
+		// Only enable geometry falloff distance parameter of geometry falloff is active
 		case PROJECTOR_GEOMFALLOFF_DIST:
 			return bc->GetBool(PROJECTOR_GEOMFALLOFF_ENABLE, false);
 	}

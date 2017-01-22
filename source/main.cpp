@@ -4,7 +4,7 @@
 #include "main.h"
 
 
-#define PLUGIN_NAME "PointProjector 1.4"
+#define PLUGIN_NAME "PointProjector 1.4.1"
 
 
 Bool PluginStart()
@@ -28,9 +28,6 @@ Bool PluginMessage(Int32 id, void *data)
 		case C4DPL_INIT_SYS:
 			if (!resource.Init())
 				return false; // don't start plugin without resource
-			return true;
-
-		case C4DMSG_PRIORITY: 
 			return true;
 	}
 
