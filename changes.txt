@@ -1,5 +1,7 @@
 1.4.1
-- Optimizations
+- Fixed a memory leak
+- Code documentation
+- Misc. optimizations
 
 1.4
 - Added support for Restriction Tag
