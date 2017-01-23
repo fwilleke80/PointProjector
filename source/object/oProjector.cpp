@@ -3,113 +3,11 @@
 #include "c4d_symbols.h"
 #include "oProjector.h"
 #include "wsPointProjector.h"
+#include "wsFunctions.h"
 #include "main.h"
 
 
 const Int32 ID_PROJECTOROBJECT = 1026403;	///< PointProjector plugin ID
-
-
-/// Draw an arrow
-/// @param bd Pointer to BaseDraw
-/// @param pos Position of the arrow in global space
-/// @param length Length of the arrow
-/// @param extra Draw some more pointy lines
-static void DrawArrow(BaseDraw *bd, const Vector &pos, Float length, Bool extra = false)
-{
-	// Good practice: Always check if required pointers are set, or if we need to draw anything at all
-	if (!bd || length == 0.0)
-		return;
-	
-	// Precalculate some values we'll need a lot
-	const Float length025 = length * 0.25;
-	const Float length125 = length * 0.125;
-	const Vector tip = pos + Vector(0.0, 0.0, length);
-
-	bd->DrawLine(pos, tip, 0);	// Main line
-	bd->DrawLine(tip, tip + Vector(length125, 0.0, -length025), 0);		// Pointy line
-	bd->DrawLine(tip, tip + Vector(-length125, 0.0, -length025), 0);	// Pointy line
-
-	// Draw even more pointy lines
-	if (extra)
-	{
-		bd->DrawLine(tip, tip + Vector(0.0, length125, -length025), 0);
-		bd->DrawLine(tip, tip + Vector(0.0, -length125, -length025), 0);
-	}
-}
-
-/// Draw a star
-/// @param bd Pointer to BaseDraw
-/// @param pos position of the star in global space
-/// @param size Size of the star
-static void DrawStar(BaseDraw *bd, const Vector &pos, Float size)
-{
-	// Good practice: Always check if required pointers are set, or if we need to draw anything at all
-	if (!bd || size <= 0.0)
-		return;
-	
-	// Precalculate this value, we'll need it a lot
-	const Float size2 = size * 0.7;
-	
-	// Straight lines
-	bd->DrawLine(Vector(0.0, -size, 0.0), Vector(0.0, size, 0.0), 0);
-	bd->DrawLine(Vector(-size, 0.0, 0.0), Vector(size, 0.0, 0.0), 0);
-	bd->DrawLine(Vector(0.0, 0.0, -size), Vector(0.0, 0.0, size), 0);
-	
-	// Diagonals
-	bd->DrawLine(Vector(-size2, -size2, -size2), Vector(size2, size2, size2), 0);
-	bd->DrawLine(Vector(-size2, size2, -size2), Vector(size2, -size2, size2), 0);
-	bd->DrawLine(Vector(-size2, -size2, size2), Vector(size2, size2, -size2), 0);
-	bd->DrawLine(Vector(size2, -size2, -size2), Vector(-size2, size2, size2), 0);
-}
-
-/// Get the actual geometry from an object
-/// @note This is done by calling SendModelingCommand(MCOMMAND_CURRENTSTATETOOBJECT). For that, a clone of op is created and inserted into a temporary document. In cases like this, SendModelingCommand() should always work on object clones in temporary documents.
-/// @warning This is a time-consuming call and relatively memory-intensive function. Don't call it unless you really have to.
-/// @param op The object to get the actual geometry from
-/// @return The actual geometry. The caller owns the pointed object.
-static PolygonObject* GetRealGeometry(BaseObject* op)
-{
-	// Create AliasTranslate
-	AutoAlloc<AliasTrans> aliasTrans;
-	if (!aliasTrans || !aliasTrans->Init(op->GetDocument()))
-		return nullptr;
-
-	// Create clone of op. We only need this for the modeling command.
-	BaseObject *tmpOp = static_cast<BaseObject*>(op->GetClone(COPYFLAGS_0, aliasTrans));
-	if (!tmpOp)
-		return nullptr;
-	
-	// Translate BaseLinks, maybe the cloned object needs that
-	aliasTrans->Translate(true);
-	
-	// Create temporary document
-	AutoAlloc<BaseDocument> tmpDoc;
-	if (!tmpDoc)
-	{
-		// Free tmpOp and return
-		BaseObject::Free(tmpOp);
-		return nullptr;
-	}
-	
-	// Insert tmpOp into tmpDoc. From now on, tmpDoc has the ownership over tmpOp,
-	// so we don't need to free tmpOp manually anymore (because tmpDoc will auto-free itself at the end of the scope, as we used AutoAlloc to create it).
-	tmpDoc->InsertObject(tmpOp, nullptr, nullptr);
-
-	// Build modeling command data
-	ModelingCommandData mcd;
-	mcd.doc = tmpDoc;
-	mcd.op = tmpOp;
-	
-	// Perform modeling command
-	if (!SendModelingCommand(MCOMMAND_CURRENTSTATETOOBJECT, mcd))
-		return nullptr;
-	
-	// Get result
-	PolygonObject *res = static_cast<PolygonObject*>(mcd.result->GetIndex(0));
-
-	// Return result
-	return res;
-}
 
 
 /// Object plugin class
@@ -120,7 +18,7 @@ class oProjector : public ObjectData
 	
 private:
 	wsPointProjector	_projector;					///< Projector object that does all the work for us (and nicely separates the projection code from the Deformer/Object code)
-	UInt32						_lastlopdirty;			///< Used to store the last retreived dirty checksum for later comparison
+	UInt32						_lastDirtyness;			///< Used to store the last retreived dirty checksum for later comparison
 	AutoAlloc<C4D_Falloff>	_falloff;			///< Provides the functions needed to support falloffs
 	
 public:
@@ -135,7 +33,7 @@ public:
 
 	static NodeData *Alloc();
 	
-	~oProjector() : _lastlopdirty(0)
+	oProjector() : _lastDirtyness(0)
 	{ }
 };
 
@@ -197,21 +95,9 @@ Bool oProjector::Message(GeListNode *node, Int32 type, void *data)
 				BaseObject *dropOp = static_cast<BaseObject*>(msgData->element);
 				if (!dropOp)
 					return true;
-				
-				// Get node info
-				Int32 opInfo = dropOp->GetInfo();
-				
-				// Get some properties
-				Bool isGenerator = opInfo & OBJECT_GENERATOR;	// Is dropOp a generator object?
-				Bool isSpline = opInfo & OBJECT_ISSPLINE;	// Is it a spline?
-				Bool isDeformer = opInfo & OBJECT_MODIFIER;	// Is it a deformer?
-				Bool isParticleModifier = opInfo & OBJECT_PARTICLEMODIFIER;
-				Bool isPolygon = opInfo & OBJECT_POLYGONOBJECT;
-				Bool isPolyInstance = dropOp->IsInstanceOf(Opolygon);	// Is it a polygon object instance?
-				
-				// We want objects that are polygon object instances or generators that are neither splines nor deformers or anything else we know we don't want.
-				// This part seems a bit messy, but there are so many possibilities that we should try and cover as many as we can.
-				msgData->result = isPolyInstance || isPolygon || (isGenerator && !isSpline && !isDeformer && !isParticleModifier);
+
+				// Allow drop if dropOp is something with geometry we can project on
+				msgData->result = GeneratesPolygons(dropOp);
 				
 				// Return true, as we handled the message
 				return true;
@@ -364,37 +250,31 @@ void oProjector::CheckDirty(BaseObject *op, BaseDocument *doc)
 	if (!bc)
 		return;
 	
-	// We'll sum up all the dirty checksums of participating objects here
-	UInt32 dirtyness = 0;
-
 	// Get linked collision object
 	BaseObject *collisionObject = static_cast<BaseObject*>(bc->GetObjectLink(PROJECTOR_LINK, doc));
 	if (!collisionObject)
 		return;
 
-	// Iterate collision object and its parents, and add their dirty checksums
-	while (collisionObject)
-	{
-		dirtyness += collisionObject->GetDirty(DIRTYFLAGS_MATRIX|DIRTYFLAGS_DATA);
-		collisionObject = collisionObject->GetUp();
-	}
-
-	// Iterate modifier's parents and add their dirty checksums
-	BaseObject *parentObject = op->GetUp();
-	while (parentObject)
-	{
-		dirtyness += parentObject->GetDirty(DIRTYFLAGS_MATRIX|DIRTYFLAGS_DATA);
-		parentObject = parentObject->GetUp();
-	}
+	// We'll sum up all the dirty checksums of participating objects here
+	UInt32 dirtyness = 0;
 	
-	//  Add modifier's dirty checksum
-	dirtyness += op->GetDirty(DIRTYFLAGS_MATRIX|DIRTYFLAGS_DATA);
+	// Flags for upcoming dirty checks
+	DIRTYFLAGS dirtyFlags = DIRTYFLAGS_DATA|DIRTYFLAGS_MATRIX;
+	
+	// Iterate collision object and its parents, and add their dirty checksums
+	dirtyness += AddDirtySums(collisionObject, false, dirtyFlags);
+
+	// Also iterate collision object's children, and add their dirty checksums (might be useful for input generators)
+	dirtyness += AddDirtySums(collisionObject->GetDown(), true, dirtyFlags);
+
+	// Iterate modifier and its parents and add their dirty checksums
+	dirtyness += AddDirtySums(op, false, dirtyFlags);
 
 	// Compare dirty checksum to previous one, set modifier dirty if necessary
-	if (dirtyness != _lastlopdirty + 1)
+	if (dirtyness != _lastDirtyness + 1)
 	{
 		// Store dirty checksum for next comparison
-		_lastlopdirty = dirtyness;
+		_lastDirtyness = dirtyness;
 		
 		// Set modifier dirty. It will be recalculated.
 		op->SetDirty(DIRTYFLAGS_DATA);
@@ -412,7 +292,7 @@ Bool oProjector::CopyTo(NodeData *dest, GeListNode *snode, GeListNode *dnode, CO
 	oProjector* destNodeData = static_cast<oProjector*>(dest);
 	
 	// Copy members
-	destNodeData->_lastlopdirty = _lastlopdirty;
+	destNodeData->_lastDirtyness = _lastDirtyness;
 
 	// Copy falloff
 	if (!_falloff->CopyTo(destNodeData->_falloff))
