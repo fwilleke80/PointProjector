@@ -1,6 +1,7 @@
 #ifndef __WS_FUNCTIONS_H__
 #define __WS_FUNCTIONS_H__
 
+
 #include "c4d.h"
 
 
@@ -35,6 +36,5 @@ Bool GeneratesPolygons(BaseObject* op);
 /// @param flags Set the dirty flags that should be checked here
 /// @return The sum of the dirty checksums of all found objects
 UInt32 AddDirtySums(BaseObject *op, Bool goDown, DIRTYFLAGS flags);
-
 
 #endif // __WS_FUNCTIONS_H__

@@ -6,6 +6,6 @@
 
 
 // forward declarations
-Bool RegisterProjectorObject(void);
+Bool RegisterProjectorObject();
 
 #endif // __MAIN_H__

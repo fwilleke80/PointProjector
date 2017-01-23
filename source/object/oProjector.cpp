@@ -17,9 +17,9 @@ class oProjector : public ObjectData
 	INSTANCEOF(oProjector, ObjectData)
 	
 private:
-	wsPointProjector	_projector;					///< Projector object that does all the work for us (and nicely separates the projection code from the Deformer/Object code)
-	UInt32						_lastDirtyness;			///< Used to store the last retreived dirty checksum for later comparison
-	AutoAlloc<C4D_Falloff>	_falloff;			///< Provides the functions needed to support falloffs
+	wsPointProjector	_projector;				///< Projector object that does all the work for us (and nicely separates the projection code from the Deformer/Object code)
+	UInt32						_lastDirtyness;		///< Used to store the last retreived dirty checksum for later comparison
+	AutoAlloc<C4D_Falloff>	_falloff;		///< Provides the functions needed to support falloffs
 	
 public:
 	virtual Bool Init(GeListNode *node);

@@ -17,9 +17,11 @@ Bool PluginStart()
 	return true;
 }
 
+
 void PluginEnd()
 {
 }
+
 
 Bool PluginMessage(Int32 id, void *data)
 {
