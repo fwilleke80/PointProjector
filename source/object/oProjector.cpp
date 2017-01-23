@@ -106,28 +106,9 @@ static PolygonObject* GetRealGeometry(BaseObject* op)
 	
 	// Get result
 	PolygonObject *res = static_cast<PolygonObject*>(mcd.result->GetIndex(0));
-	if (!res)
-		return nullptr;
-	
+
+	// Return result
 	return res;
-	
-//	if (!op && !op->IsInstanceOf(Opolygon))
-//		return nullptr;
-//	
-//	if (op->GetDeformCache())
-//	{
-//		GePrint("return GetDeformCache()");
-//		return static_cast<PolygonObject*>(op->GetDeformCache());
-//	}
-//	
-//	if (op->GetCache())
-//	{
-//		GePrint("return GetCache()");
-//		return static_cast<PolygonObject*>(op->GetCache());
-//	}
-//	
-//	GePrint("return op");
-//	return static_cast<PolygonObject*>(op);
 }
 
 
@@ -190,26 +171,48 @@ Bool oProjector::Message(GeListNode *node, Int32 type, void *data)
 	if (!bc)
 		return false;
 
-	// Enable the deformer object
 	switch (type)
 	{
+		// Enable the deformer object
 		case MSG_MENUPREPARE:
 			(static_cast<BaseObject*>(node))->SetDeformMode(true);
-			
+			return true;
+		
+		// The user wants to drop something somewhere
 		case MSG_DESCRIPTION_CHECKDRAGANDDROP:
 		{
 			if (!data)
 				return false;
 			
+			// Get message data
 			DescriptionCheckDragAndDrop *msgData = (DescriptionCheckDragAndDrop*)data;
-			BaseObject *dropOp = static_cast<BaseObject*>(msgData->element);
-			if (!dropOp)
-				return false;
 			
-			// TODO: Recognize an object that will produce polygons
-			msgData->result = dropOp->IsInstanceOf(Opolygon);
-			
-			return true;
+			// Check if something should be dropped into PROJECTOR_LINK
+			if (msgData->id == PROJECTOR_LINK)
+			{
+				// Get object that the user wants to drop
+				BaseObject *dropOp = static_cast<BaseObject*>(msgData->element);
+				if (!dropOp)
+					return true;
+				
+				// Get node info
+				Int32 opInfo = dropOp->GetInfo();
+				
+				// Get some properties
+				Bool isGenerator = opInfo & OBJECT_GENERATOR;	// Is dropOp a generator object?
+				Bool isSpline = opInfo & OBJECT_ISSPLINE;	// Is it a spline?
+				Bool isDeformer = opInfo & OBJECT_MODIFIER;	// Is it a deformer?
+				Bool isParticleModifier = opInfo & OBJECT_PARTICLEMODIFIER;
+				Bool isPolygon = opInfo & OBJECT_POLYGONOBJECT;
+				Bool isPolyInstance = dropOp->IsInstanceOf(Opolygon);	// Is it a polygon object instance?
+				
+				// We want objects that are polygon object instances or generators that are neither splines nor deformers or anything else we know we don't want.
+				// This part seems a bit messy, but there are so many possibilities that we should try and cover as many as we can.
+				msgData->result = isPolyInstance || isPolygon || (isGenerator && !isSpline && !isDeformer && !isParticleModifier);
+				
+				// Return true, as we handled the message
+				return true;
+			}
 		}
 	}
 
