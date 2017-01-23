@@ -63,27 +63,71 @@ static void DrawStar(BaseDraw *bd, const Vector &pos, Float size)
 }
 
 /// Get the actual geometry from an object
+/// @note This is done by calling SendModelingCommand(MCOMMAND_CURRENTSTATETOOBJECT). For that, a clone of op is created and inserted into a temporary document. In cases like this, SendModelingCommand() should always work on object clones in temporary documents.
+/// @warning This is a time-consuming call and relatively memory-intensive function. Don't call it unless you really have to.
 /// @param op The object to get the actual geometry from
-/// @return The actual geometry. Cinema owns the pointed object.
+/// @return The actual geometry. The caller owns the pointed object.
 static PolygonObject* GetRealGeometry(BaseObject* op)
 {
-	if (!op && !op->IsInstanceOf(Opolygon))
+	// Create AliasTranslate
+	AutoAlloc<AliasTrans> aliasTrans;
+	if (!aliasTrans || !aliasTrans->Init(op->GetDocument()))
+		return nullptr;
+
+	// Create clone of op. We only need this for the modeling command.
+	BaseObject *tmpOp = static_cast<BaseObject*>(op->GetClone(COPYFLAGS_0, aliasTrans));
+	if (!tmpOp)
 		return nullptr;
 	
-	if (op->GetDeformCache())
+	// Translate BaseLinks, maybe the cloned object needs that
+	aliasTrans->Translate(true);
+	
+	// Create temporary document
+	AutoAlloc<BaseDocument> tmpDoc;
+	if (!tmpDoc)
 	{
-		GePrint("return GetDeformCache()");
-		return static_cast<PolygonObject*>(op->GetDeformCache());
+		// Free tmpOp and return
+		BaseObject::Free(tmpOp);
+		return nullptr;
 	}
 	
-	if (op->GetCache())
-	{
-		GePrint("return GetCache()");
-		return static_cast<PolygonObject*>(op->GetCache());
-	}
+	// Insert tmpOp into tmpDoc. From now on, tmpDoc has the ownership over tmpOp,
+	// so we don't need to free tmpOp manually anymore (because tmpDoc will auto-free itself at the end of the scope, as we used AutoAlloc to create it).
+	tmpDoc->InsertObject(tmpOp, nullptr, nullptr);
+
+	// Build modeling command data
+	ModelingCommandData mcd;
+	mcd.doc = tmpDoc;
+	mcd.op = tmpOp;
 	
-	GePrint("return op");
-	return static_cast<PolygonObject*>(op);
+	// Perform modeling command
+	if (!SendModelingCommand(MCOMMAND_CURRENTSTATETOOBJECT, mcd))
+		return nullptr;
+	
+	// Get result
+	PolygonObject *res = static_cast<PolygonObject*>(mcd.result->GetIndex(0));
+	if (!res)
+		return nullptr;
+	
+	return res;
+	
+//	if (!op && !op->IsInstanceOf(Opolygon))
+//		return nullptr;
+//	
+//	if (op->GetDeformCache())
+//	{
+//		GePrint("return GetDeformCache()");
+//		return static_cast<PolygonObject*>(op->GetDeformCache());
+//	}
+//	
+//	if (op->GetCache())
+//	{
+//		GePrint("return GetCache()");
+//		return static_cast<PolygonObject*>(op->GetCache());
+//	}
+//	
+//	GePrint("return op");
+//	return static_cast<PolygonObject*>(op);
 }
 
 
@@ -147,9 +191,26 @@ Bool oProjector::Message(GeListNode *node, Int32 type, void *data)
 		return false;
 
 	// Enable the deformer object
-	if (type == MSG_MENUPREPARE)
+	switch (type)
 	{
-		(static_cast<BaseObject*>(node))->SetDeformMode(true);
+		case MSG_MENUPREPARE:
+			(static_cast<BaseObject*>(node))->SetDeformMode(true);
+			
+		case MSG_DESCRIPTION_CHECKDRAGANDDROP:
+		{
+			if (!data)
+				return false;
+			
+			DescriptionCheckDragAndDrop *msgData = (DescriptionCheckDragAndDrop*)data;
+			BaseObject *dropOp = static_cast<BaseObject*>(msgData->element);
+			if (!dropOp)
+				return false;
+			
+			// TODO: Recognize an object that will produce polygons
+			msgData->result = dropOp->IsInstanceOf(Opolygon);
+			
+			return true;
+		}
 	}
 
 	// Forward messages to the falloff, it might need them
@@ -227,10 +288,23 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 		return false;
 	
 	// Get collision object
-	//PolygonObject *collisionObject = static_cast<PolygonObject*>(bc->GetObjectLink(PROJECTOR_LINK, doc));
-	PolygonObject* collisionObject = GetRealGeometry(bc->GetObjectLink(PROJECTOR_LINK, doc));
+	BaseObject *collisionObject = bc->GetObjectLink(PROJECTOR_LINK, doc);
 	if (!collisionObject)
 		return true;
+
+	// Is it a polygon object?
+	Bool origCollisionObjectIsPoly = collisionObject->GetType() == Opolygon;
+	
+	// If it's not, we need to make it a proper polygon object
+	if (!origCollisionObjectIsPoly)
+	{
+		// Get real geometry
+		collisionObject = GetRealGeometry(collisionObject);
+		
+		// No chance, we give up
+		if (!collisionObject || collisionObject->GetType() != Opolygon)
+			return false;
+	}
 
 	// Get parameters
 	PROJECTORMODE mode = (PROJECTORMODE)bc->GetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
@@ -248,7 +322,7 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 		return false;
 	
 	// Initialize projector
-	if (!_projector.Init(collisionObject))
+	if (!_projector.Init(static_cast<PolygonObject*>(collisionObject)))
 		return false;
 
 	// Parameters for projection
@@ -257,6 +331,10 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 	// Perform projection
 	if (!_projector.Project(static_cast<PointObject*>(op), projectorParams, thread))
 		return false;
+	
+	// Free collisionObject if we created it from the original collisionObject
+	if (!origCollisionObjectIsPoly)
+		BaseObject::Free(collisionObject);
 	
 	// Free weight map (important! Otherwise the memory fills up rather quickly)
 	DeleteMem(weightMap);
