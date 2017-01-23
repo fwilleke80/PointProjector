@@ -21,12 +21,18 @@
     <ClCompile Include="source\object\oProjector.cpp">
       <Filter>source\object</Filter>
     </ClCompile>
+    <ClCompile Include="source\lib\wsFunctions.cpp">
+      <Filter>source\lib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\main.h">
       <Filter>source</Filter>
     </ClInclude>
     <ClInclude Include="source\lib\wsPointProjector.h">
+      <Filter>source\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="source\lib\wsFunctions.h">
       <Filter>source\lib</Filter>
     </ClInclude>
   </ItemGroup>
