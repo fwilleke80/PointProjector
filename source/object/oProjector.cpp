@@ -120,7 +120,7 @@ class oProjector : public ObjectData
 	
 private:
 	wsPointProjector	_projector;					///< Projector object that does all the work for us (and nicely separates the projection code from the Deformer/Object code)
-	UInt32						_lastlopdirty = 0;	///< Used to store the last retreived dirty checksum for later comparison
+	UInt32						_lastlopdirty;			///< Used to store the last retreived dirty checksum for later comparison
 	AutoAlloc<C4D_Falloff>	_falloff;			///< Provides the functions needed to support falloffs
 	
 public:
@@ -134,6 +134,9 @@ public:
 	virtual Bool GetDEnabling(GeListNode *node, const DescID &id, const GeData &t_data, DESCFLAGS_ENABLE flags, const BaseContainer *itemdesc);
 
 	static NodeData *Alloc();
+	
+	~oProjector() : _lastlopdirty(0)
+	{ }
 };
 
 
