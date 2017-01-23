@@ -7,7 +7,7 @@ CONTAINER oProjector
 	{
 		DEFAULT 1;
 		
-		LINK		PROJECTOR_LINK				{ ACCEPT { Opolygon; Ofractal; Oplane; } }
+		LINK		PROJECTOR_LINK				{ ACCEPT { Obase; Opolygon; Ofractal; Oplane; } }
 		LONG		PROJECTOR_MODE
 		{
 			CYCLE
