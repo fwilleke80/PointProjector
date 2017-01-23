@@ -87,6 +87,10 @@ PolygonObject* GetRealGeometry(BaseObject* op)
 	// Get result
 	PolygonObject *res = static_cast<PolygonObject*>(mcd.result->GetIndex(0));
 	
+	// Set original matrix
+	if (res)
+		res->SetMg(op->GetMg());
+	
 	// Return result
 	return res;
 }
