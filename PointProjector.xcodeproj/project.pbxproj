@@ -10,6 +10,8 @@
 		0190185A1DCB48F7000D41F4 /* wsPointProjector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 019018561DCB48F7000D41F4 /* wsPointProjector.cpp */; };
 		0190185B1DCB48F7000D41F4 /* wsPointProjector.h in Headers */ = {isa = PBXBuildFile; fileRef = 019018571DCB48F7000D41F4 /* wsPointProjector.h */; };
 		0190185C1DCB48F7000D41F4 /* oProjector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 019018591DCB48F7000D41F4 /* oProjector.cpp */; };
+		01F3FE681E3657240040DDE0 /* wsFunctions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 01F3FE661E3657240040DDE0 /* wsFunctions.cpp */; };
+		01F3FE691E3657240040DDE0 /* wsFunctions.h in Headers */ = {isa = PBXBuildFile; fileRef = 01F3FE671E3657240040DDE0 /* wsFunctions.h */; };
 		A0A66833391837B5E7010000 /* main.h in Headers */ = {isa = PBXBuildFile; fileRef = A0A66833391837B5E7000000 /* main.h */; };
 		A0A6683339E921D362010000 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A0A6683339E921D362000000 /* main.cpp */; };
 		A0A6683339F470FF41010000 /* libcinema.framework.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A0A6683339F470FF41000000 /* libcinema.framework.a */; };
@@ -50,6 +52,8 @@
 		019018561DCB48F7000D41F4 /* wsPointProjector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = wsPointProjector.cpp; sourceTree = "<group>"; };
 		019018571DCB48F7000D41F4 /* wsPointProjector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wsPointProjector.h; sourceTree = "<group>"; };
 		019018591DCB48F7000D41F4 /* oProjector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = oProjector.cpp; sourceTree = "<group>"; };
+		01F3FE661E3657240040DDE0 /* wsFunctions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = wsFunctions.cpp; sourceTree = "<group>"; };
+		01F3FE671E3657240040DDE0 /* wsFunctions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wsFunctions.h; sourceTree = "<group>"; };
 		8ACD68381C66E7D100F34089 /* sanitizerbase.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = sanitizerbase.xcconfig; path = ../../frameworks/settings/sanitizerbase.xcconfig; sourceTree = "<group>"; };
 		A08C5CDEA3A66833397B0000 /* PointProjector.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = PointProjector.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		A0A668333900000000000000 /* debugbase.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = debugbase.xcconfig; path = ../../frameworks/settings/debugbase.xcconfig; sourceTree = SOURCE_ROOT; };
@@ -106,6 +110,8 @@
 			children = (
 				019018561DCB48F7000D41F4 /* wsPointProjector.cpp */,
 				019018571DCB48F7000D41F4 /* wsPointProjector.h */,
+				01F3FE661E3657240040DDE0 /* wsFunctions.cpp */,
+				01F3FE671E3657240040DDE0 /* wsFunctions.h */,
 			);
 			name = lib;
 			path = source/lib;
@@ -185,6 +191,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				01F3FE691E3657240040DDE0 /* wsFunctions.h in Headers */,
 				0190185B1DCB48F7000D41F4 /* wsPointProjector.h in Headers */,
 				A0A66833391837B5E7010000 /* main.h in Headers */,
 			);
@@ -268,6 +275,7 @@
 				0190185C1DCB48F7000D41F4 /* oProjector.cpp in Sources */,
 				A0A6683339E921D362010000 /* main.cpp in Sources */,
 				0190185A1DCB48F7000D41F4 /* wsPointProjector.cpp in Sources */,
+				01F3FE681E3657240040DDE0 /* wsFunctions.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
