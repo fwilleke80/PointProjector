@@ -6,6 +6,7 @@ This plugin demonstrates the following C4D API aspects:
 * Deformer object plugins, derived from `class ObjectData`
 * Ray intersections with `class GeRayCollider`
 * Supporting MoGraph falloffs with `class C4D_Falloff`
+* Achieving good performance by using a custom caching mechanism with `ObjectData::CheckDirty()`
+* Getting polygons and caches from generator objects
 * Drawing in the viewport
 * Vector and matrix math in general
-* Achieving good performance using a custom caching mechanism with `ObjectData::CheckDirty()`
