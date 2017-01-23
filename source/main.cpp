@@ -4,7 +4,7 @@
 #include "main.h"
 
 
-#define PLUGIN_NAME "PointProjector 1.4.1"
+#define PLUGIN_NAME "PointProjector 1.4.2"
 
 
 Bool PluginStart()
@@ -17,9 +17,11 @@ Bool PluginStart()
 	return true;
 }
 
+
 void PluginEnd()
 {
 }
+
 
 Bool PluginMessage(Int32 id, void *data)
 {

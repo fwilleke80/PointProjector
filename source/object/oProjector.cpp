@@ -3,64 +3,11 @@
 #include "c4d_symbols.h"
 #include "oProjector.h"
 #include "wsPointProjector.h"
+#include "wsFunctions.h"
 #include "main.h"
 
 
 const Int32 ID_PROJECTOROBJECT = 1026403;	///< PointProjector plugin ID
-
-
-/// Draw an arrow
-/// @param bd Pointer to BaseDraw
-/// @param pos Position of the arrow in global space
-/// @param length Length of the arrow
-/// @param extra Draw some more pointy lines
-static void DrawArrow(BaseDraw *bd, const Vector &pos, Float length, Bool extra = false)
-{
-	// Good practice: Always check if required pointers are set, or if we need to draw anything at all
-	if (!bd || length == 0.0)
-		return;
-	
-	// Precalculate some values we'll need a lot
-	const Float length025 = length * 0.25;
-	const Float length125 = length * 0.125;
-	const Vector tip = pos + Vector(0.0, 0.0, length);
-
-	bd->DrawLine(pos, tip, 0);	// Main line
-	bd->DrawLine(tip, tip + Vector(length125, 0.0, -length025), 0);		// Pointy line
-	bd->DrawLine(tip, tip + Vector(-length125, 0.0, -length025), 0);	// Pointy line
-
-	// Draw even more pointy lines
-	if (extra)
-	{
-		bd->DrawLine(tip, tip + Vector(0.0, length125, -length025), 0);
-		bd->DrawLine(tip, tip + Vector(0.0, -length125, -length025), 0);
-	}
-}
-
-/// Draw a star
-/// @param bd Pointer to BaseDraw
-/// @param pos position of the star in global space
-/// @param size Size of the star
-static void DrawStar(BaseDraw *bd, const Vector &pos, Float size)
-{
-	// Good practice: Always check if required pointers are set, or if we need to draw anything at all
-	if (!bd || size <= 0.0)
-		return;
-	
-	// Precalculate this value, we'll need it a lot
-	const Float size2 = size * 0.7;
-	
-	// Straight lines
-	bd->DrawLine(Vector(0.0, -size, 0.0), Vector(0.0, size, 0.0), 0);
-	bd->DrawLine(Vector(-size, 0.0, 0.0), Vector(size, 0.0, 0.0), 0);
-	bd->DrawLine(Vector(0.0, 0.0, -size), Vector(0.0, 0.0, size), 0);
-	
-	// Diagonals
-	bd->DrawLine(Vector(-size2, -size2, -size2), Vector(size2, size2, size2), 0);
-	bd->DrawLine(Vector(-size2, size2, -size2), Vector(size2, -size2, size2), 0);
-	bd->DrawLine(Vector(-size2, -size2, size2), Vector(size2, size2, -size2), 0);
-	bd->DrawLine(Vector(size2, -size2, -size2), Vector(-size2, size2, size2), 0);
-}
 
 
 /// Object plugin class
@@ -70,9 +17,9 @@ class oProjector : public ObjectData
 	INSTANCEOF(oProjector, ObjectData)
 	
 private:
-	wsPointProjector	_projector;					///< Projector object that does all the work for us (and nicely separates the projection code from the Deformer/Object code)
-	UInt32						_lastlopdirty = 0;	///< Used to store the last retreived dirty checksum for later comparison
-	AutoAlloc<C4D_Falloff>	_falloff;			///< Provides the functions needed to support falloffs
+	wsPointProjector	_projector;				///< Projector object that does all the work for us (and nicely separates the projection code from the Deformer/Object code)
+	UInt32						_lastDirtyness;		///< Used to store the last retreived dirty checksum for later comparison
+	AutoAlloc<C4D_Falloff>	_falloff;		///< Provides the functions needed to support falloffs
 	
 public:
 	virtual Bool Init(GeListNode *node);
@@ -85,6 +32,9 @@ public:
 	virtual Bool GetDEnabling(GeListNode *node, const DescID &id, const GeData &t_data, DESCFLAGS_ENABLE flags, const BaseContainer *itemdesc);
 
 	static NodeData *Alloc();
+	
+	oProjector() : _lastDirtyness(0)
+	{ }
 };
 
 
@@ -122,10 +72,37 @@ Bool oProjector::Message(GeListNode *node, Int32 type, void *data)
 	if (!bc)
 		return false;
 
-	// Enable the deformer object
-	if (type == MSG_MENUPREPARE)
+	switch (type)
 	{
-		(static_cast<BaseObject*>(node))->SetDeformMode(true);
+		// Enable the deformer object
+		case MSG_MENUPREPARE:
+			(static_cast<BaseObject*>(node))->SetDeformMode(true);
+			return true;
+		
+		// The user wants to drop something somewhere
+		case MSG_DESCRIPTION_CHECKDRAGANDDROP:
+		{
+			if (!data)
+				return false;
+			
+			// Get message data
+			DescriptionCheckDragAndDrop *msgData = (DescriptionCheckDragAndDrop*)data;
+			
+			// Check if something should be dropped into PROJECTOR_LINK
+			if (msgData->id == PROJECTOR_LINK)
+			{
+				// Get object that the user wants to drop
+				BaseObject *dropOp = static_cast<BaseObject*>(msgData->element);
+				if (!dropOp)
+					return true;
+
+				// Allow drop if dropOp is something with geometry we can project on
+				msgData->result = GeneratesPolygons(dropOp);
+				
+				// Return true, as we handled the message
+				return true;
+			}
+		}
 	}
 
 	// Forward messages to the falloff, it might need them
@@ -203,9 +180,23 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 		return false;
 	
 	// Get collision object
-	PolygonObject *collisionObject = static_cast<PolygonObject*>(bc->GetObjectLink(PROJECTOR_LINK, doc));
+	BaseObject *collisionObject = bc->GetObjectLink(PROJECTOR_LINK, doc);
 	if (!collisionObject)
 		return true;
+
+	// Is it a polygon object?
+	Bool origCollisionObjectIsPoly = collisionObject->GetType() == Opolygon;
+	
+	// If it's not, we need to make it a proper polygon object
+	if (!origCollisionObjectIsPoly)
+	{
+		// Get real geometry
+		collisionObject = GetRealGeometry(collisionObject);
+		
+		// No chance, we give up
+		if (!collisionObject || collisionObject->GetType() != Opolygon)
+			return false;
+	}
 
 	// Get parameters
 	PROJECTORMODE mode = (PROJECTORMODE)bc->GetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
@@ -215,7 +206,6 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 	Float geometryFalloffDist = bc->GetFloat(PROJECTOR_GEOMFALLOFF_DIST, 100.0);
 	
 	// Calculate weight map from vertex maps linked in restriction tag
-	// TODO: Call CalcVertexMap() only if any of the linked vertex map tags has changed since the last time
 	Float32* weightMap = nullptr;
 	weightMap = ToPoint(op)->CalcVertexMap(mod);
 
@@ -224,7 +214,7 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 		return false;
 	
 	// Initialize projector
-	if (!_projector.Init(collisionObject))
+	if (!_projector.Init(static_cast<PolygonObject*>(collisionObject)))
 		return false;
 
 	// Parameters for projection
@@ -233,6 +223,10 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 	// Perform projection
 	if (!_projector.Project(static_cast<PointObject*>(op), projectorParams, thread))
 		return false;
+	
+	// Free collisionObject if we created it from the original collisionObject
+	if (!origCollisionObjectIsPoly)
+		BaseObject::Free(collisionObject);
 	
 	// Free weight map (important! Otherwise the memory fills up rather quickly)
 	DeleteMem(weightMap);
@@ -256,37 +250,31 @@ void oProjector::CheckDirty(BaseObject *op, BaseDocument *doc)
 	if (!bc)
 		return;
 	
-	// We'll sum up all the dirty checksums of participating objects here
-	UInt32 dirtyness = 0;
-
 	// Get linked collision object
 	BaseObject *collisionObject = static_cast<BaseObject*>(bc->GetObjectLink(PROJECTOR_LINK, doc));
 	if (!collisionObject)
 		return;
 
-	// Iterate collision object and its parents, and add their dirty checksums
-	while (collisionObject)
-	{
-		dirtyness += collisionObject->GetDirty(DIRTYFLAGS_MATRIX|DIRTYFLAGS_DATA);
-		collisionObject = collisionObject->GetUp();
-	}
-
-	// Iterate modifier's parents and add their dirty checksums
-	BaseObject *parentObject = op->GetUp();
-	while (parentObject)
-	{
-		dirtyness += parentObject->GetDirty(DIRTYFLAGS_MATRIX|DIRTYFLAGS_DATA);
-		parentObject = parentObject->GetUp();
-	}
+	// We'll sum up all the dirty checksums of participating objects here
+	UInt32 dirtyness = 0;
 	
-	//  Add modifier's dirty checksum
-	dirtyness += op->GetDirty(DIRTYFLAGS_MATRIX|DIRTYFLAGS_DATA);
+	// Flags for upcoming dirty checks
+	DIRTYFLAGS dirtyFlags = DIRTYFLAGS_DATA|DIRTYFLAGS_MATRIX;
+	
+	// Iterate collision object and its parents, and add their dirty checksums
+	dirtyness += AddDirtySums(collisionObject, false, dirtyFlags);
+
+	// Also iterate collision object's children, and add their dirty checksums (might be useful for input generators)
+	dirtyness += AddDirtySums(collisionObject->GetDown(), true, dirtyFlags);
+
+	// Iterate modifier and its parents and add their dirty checksums
+	dirtyness += AddDirtySums(op, false, dirtyFlags);
 
 	// Compare dirty checksum to previous one, set modifier dirty if necessary
-	if (dirtyness != _lastlopdirty + 1)
+	if (dirtyness != _lastDirtyness + 1)
 	{
 		// Store dirty checksum for next comparison
-		_lastlopdirty = dirtyness;
+		_lastDirtyness = dirtyness;
 		
 		// Set modifier dirty. It will be recalculated.
 		op->SetDirty(DIRTYFLAGS_DATA);
@@ -304,7 +292,7 @@ Bool oProjector::CopyTo(NodeData *dest, GeListNode *snode, GeListNode *dnode, CO
 	oProjector* destNodeData = static_cast<oProjector*>(dest);
 	
 	// Copy members
-	destNodeData->_lastlopdirty = _lastlopdirty;
+	destNodeData->_lastDirtyness = _lastDirtyness;
 
 	// Copy falloff
 	if (!_falloff->CopyTo(destNodeData->_falloff))

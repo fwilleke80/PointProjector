@@ -114,11 +114,13 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="source\lib\wsFunctions.cpp" />
     <ClCompile Include="source\lib\wsPointProjector.cpp" />
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\object\oProjector.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="source\lib\wsFunctions.h" />
     <ClInclude Include="source\lib\wsPointProjector.h" />
     <ClInclude Include="source\main.h" />
   </ItemGroup>
