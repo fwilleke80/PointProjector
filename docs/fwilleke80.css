@@ -81,10 +81,6 @@ p {
 	margin: 0px 0px 0.5em 0px;
 }
 
-p.profileitem {
-	margin: 0em 0px 1em 0px;
-}
-
 a {
 	color: #8F806C;
 }
@@ -99,10 +95,6 @@ a:visited {
 
 .floatright {
 	float: right;
-}
-
-#dimmed {
-	color: #555555;
 }
 
 #slightlybigger {
