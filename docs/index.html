@@ -1,0 +1,179 @@
+<html>
+	<head>
+		<title>PointProjector</title>
+		<style type="text/css">
+			<!--
+body {
+	background-color: #EFE0CC;
+	color: black;
+	font-family: Geneva, Helvetica, Arial, sans-serif;
+	font-size: 0.75em;
+	padding: 0px;
+	margin: 1em 1em 1em 1em;
+}
+
+img {
+	border: 1px solid black;
+}
+
+div.maincontent {
+	background-color: white;
+	padding: 1em	;
+	margin: auto;
+	border: 1px dashed black;
+	-webkit-box-shadow: 10px 10px 30px -10px rgba(0,0,0,0.5);
+	-moz-box-shadow: 10px 10px 30px -10px rgba(0,0,0,0.5);
+	box-shadow: 10px 10px 30px -10px rgba(0,0,0,0.5);
+	max-width: 1024px;
+}
+
+div.floatright {
+	float: right;
+	padding: 0.5em;
+	background-color: #F5F5F5;
+	border: 1px solid #AAAAAA;
+	-webkit-box-shadow: 10px 10px 30px -10px rgba(0,0,0,0.5);
+	-moz-box-shadow: 10px 10px 30px -10px rgba(0,0,0,0.5);
+	box-shadow: 10px 10px 30px -10px rgba(0,0,0,0.5);
+	margin: 0px 0px 1.5em 1.5em;
+}
+
+div.indent {
+	margin-left: 1em;
+}
+
+h1 {
+	font-size: 2.5em;
+	font-weight: 700;
+	width: 100%;
+	border-width: 0px 0px 1px 0px;
+	border-style: none none dotted none;
+	border-color: black;
+	padding: 5px 0px 0px 0px;
+	margin: 0px 0px 1em 0px;
+}
+
+h2 {
+	font-size: 14px;
+	font-weight: 700;
+	width: 50%;
+	border-width: 0px 0px 1px 0px;
+	border-style: none none dotted none;
+	border-color: darkgray;
+	padding: 5px 0px 0px 0px;
+	margin: 0px 0px 1em 0px;
+}
+
+h3
+{
+	font-size: 14px;
+	font-weight: 700;
+	width: 50%;
+	padding: 5px 0px 0px 0px;
+	margin: 0.75em 0px 0.5em 0px;
+}
+
+h4
+{
+	font-size: 12px;
+	font-weight: 700;
+	width: 50%;
+	padding: 5px 0px 0px 0px;
+	margin: 0.75em 0px 0.25em 0px;
+}
+
+p {
+	margin: 0px 0px 0.5em 0px;
+}
+
+li {
+	margin: 0.75em 0px 0px 0px;
+}
+
+a {
+	color: #8F806C;
+}
+
+a:hover {
+	color: #DD2200;
+}
+
+a:visited {
+	color: #6F604C;
+}
+
+			-->
+		</style>
+		<meta name="keywords" content="PointProjector,plugin,cinema,C++,C,free,opensource,parameters,usage,help">
+	</head>
+
+	<body>
+		<div class="maincontent">
+			<h1>PointProjector</h1>
+
+			<div class="floatright">
+				<p>Get the sourcecode:<br /><a href="https://github.com/fwilleke80/PointProjector">github.com/fwilleke80/PointProjector</a></p>
+				<p>Download release:<br /><a href="https://github.com/fwilleke80/PointProjector/releases">github.com/fwilleke80/PointProjector/releases</a></p>
+				<p>Licensed under:<br /><a href="https://www.gnu.org/licenses/gpl-3.0.en.html">GPL 3.0</a></p>
+				<a href="pointprojector.jpg"><img src="pointprojector.jpg" width="400px" height="300px" /></a>
+			</div>
+
+			<p>PointProjector is a free little plugin for <a href="https://www.maxon.net">Maxon Cinema 4D</a> projects the ponts of any polygon or spline object on a geometry. Since PointProjector is a deformer object, it works non-destructively.</p>
+
+			<p>PointProjector was written because I wanted to be able to do dynamic on-the-fly projection of points, and because Cinema 4D's builtin Project function only works with splines. It is a good example for a simple deformer object plugin.</p>
+
+			<h2>Installation</h2>
+			<p>
+				<ol>
+					<li>If you have already an older version of PointProjector installed (maybe even still called &quot;SplineProjector&quot;), remove its directory.</li>
+					<li>Just unzip the archive and place the folder &quot;PointProjector&quot; inside the folder &quot;Cinema 4D Rxx/plugins&quot;.</li>
+					<li>When you start Cinema 4D the next time, PointProjector will be available from the <i>Plugins</i> menu.</li>
+				</ol>
+      </p>
+
+			<h2>Help</h2>
+			<p>Attributes explained...</p>
+
+			<h3>Projector</h3>
+			<p>All attributes used for the point projection are found here.</p>
+
+			<div class="indent">
+				<h4>Link</h4>
+				<p>Link the geometry you want to project the points on here.</p>
+				<p>Polygon objects and any generator that generates polygon objects should work.</p>
+			
+				<h4>Mode</h4>
+				<p>Select the projection mode here:
+					<ul>
+						<li>
+							<p><strong>Parallel</strong></p>
+							<p>Points are projected along the direction of the PointProjector's Z axis.</p>
+							<p>Good for projecting roads on landscapes, blankets on the ground, et cetera.</p>
+						</li>
+						<li>
+							<p><strong>Spherical</strong></p>
+							<p>Points are projected away from the PointProjector's position.</p>
+							<p>Good for projecting stuff inside cavities or concave objects.</p>
+						</li>
+					</ul>
+				</p>
+
+				<h4>Offset</h4>
+				<p>Move the projected points along the face normal of the geometry they've been projected on.</p>
+			
+				<h4>Blend</h4>
+				<p>Seamlessly blend between projected and unprojected shape.</p>
+			
+				<h4>Geometry Falloff</h4>
+				<p>Enables the geometry falloff mode.</p>
+				<p>In geometry falloff mode, points are projected only within a certain range, starting from the PointProjector object. Within that range, points are moved towards the surface using a soft step interpolation.</p>
+			
+				<h4>Distance</h4>
+				<p>Defines the size of the falloff area around the PointProjector.</p>
+			</div>
+
+			<h3>Falloff</h3>
+			<p>This tab provides the standard Falloff functionality, as known from other deformers and effectors in Cinema 4D.</p>
+		</div>
+	</body>
+</html>
