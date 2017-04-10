@@ -7,7 +7,7 @@
 #include "main.h"
 
 
-const Int32 ID_PROJECTOROBJECT = 1026403; ///< PointProjector plugin ID
+static const Int32 ID_PROJECTOROBJECT = 1026403; ///< PointProjector plugin ID
 
 
 /// Object plugin class
