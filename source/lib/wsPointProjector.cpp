@@ -35,10 +35,10 @@ Bool wsPointProjector::ProjectPosition(Vector &position, const Vector &rayDirect
 	if (rayLength <= 0.0 || rayDirection == Vector())
 		return false;
 
-	Vector workPosition = collisionObjectMgI * position;		// Transform position to m_collop's local space
+	Vector workPosition = collisionObjectMgI * position;            // Transform position to m_collop's local space
 	GeRayColResult collisionResult;
 	Vector rPos(workPosition);
-	Vector rDir(collisionObjectMgI.TransformVector(rayDirection));		// Transform direction to m_collop's local space
+	Vector rDir(collisionObjectMgI.TransformVector(rayDirection));  // Transform direction to m_collop's local space
 
 	if (_collider->Intersect(rPos, rDir, rayLength, false))
 	{
