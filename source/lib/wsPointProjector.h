@@ -18,14 +18,14 @@ enum PROJECTORMODE
 /// Parameters for projection
 struct wsPointProjectorParams
 {
-	Matrix				_modifierMg;							///< Global matrix of modifier
-	PROJECTORMODE	_mode;										///< Projector mode (parallel or spherical)
-	Float					_offset;									///< Offset attribute
-	Float					_blend;										///< Blend attribute
-	Bool					_geometryFalloffEnabled;	///< Geometry falloff enabled attribute
-	Float					_geometryFalloffDist;			///< Geometry falloff distance attribute
-	Float32				*_weightMap;							///< Ptr to weight map
-	C4D_Falloff		*_falloff;								///< Ptr to falloff
+	Matrix        _modifierMg;              ///< Global matrix of modifier
+	PROJECTORMODE _mode;                    ///< Projector mode (parallel or spherical)
+	Float         _offset;                  ///< Offset attribute
+	Float         _blend;                   ///< Blend attribute
+	Bool          _geometryFalloffEnabled;  ///< Geometry falloff enabled attribute
+	Float         _geometryFalloffDist;     ///< Geometry falloff distance attribute
+	Float32      *_weightMap;               ///< Ptr to weight map
+	C4D_Falloff  *_falloff;                 ///< Ptr to falloff
 	
 	/// Default constructor
 	wsPointProjectorParams() : _mode(PROJECTORMODE_PARALLEL), _offset(0.0), _blend(0.0), _geometryFalloffEnabled(false), _geometryFalloffDist(0.0), _weightMap(nullptr), _falloff(nullptr)
@@ -40,9 +40,9 @@ struct wsPointProjectorParams
 class wsPointProjector
 {
 private:
-	AutoAlloc<GeRayCollider>	_collider;					///< Used for shooting rays at the collision geometry
-	PolygonObject							*_collisionObject;	///< Collision geometry
-	Bool											_initialized;				///< Indicates if the class has been initialized
+	AutoAlloc<GeRayCollider>  _collider;         ///< Used for shooting rays at the collision geometry
+	PolygonObject            *_collisionObject;  ///< Collision geometry
+	Bool                      _initialized;      ///< Indicates if the class has been initialized
 	
 public:
 	/// Initialize class with the passed collisionObject

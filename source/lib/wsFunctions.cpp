@@ -12,9 +12,9 @@ void DrawArrow(BaseDraw *bd, const Vector &pos, Float length, Bool extra)
 	const Float length125 = length * 0.125;
 	const Vector tip = pos + Vector(0.0, 0.0, length);
 	
-	bd->DrawLine(pos, tip, 0);	// Main line
-	bd->DrawLine(tip, tip + Vector(length125, 0.0, -length025), 0);		// Pointy line
-	bd->DrawLine(tip, tip + Vector(-length125, 0.0, -length025), 0);	// Pointy line
+	bd->DrawLine(pos, tip, 0);  // Main line
+	bd->DrawLine(tip, tip + Vector(length125, 0.0, -length025), 0);   // Pointy line
+	bd->DrawLine(tip, tip + Vector(-length125, 0.0, -length025), 0);  // Pointy line
 	
 	// Draw even more pointy lines
 	if (extra)

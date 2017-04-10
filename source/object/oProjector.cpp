@@ -7,7 +7,7 @@
 #include "main.h"
 
 
-const Int32 ID_PROJECTOROBJECT = 1026403;	///< PointProjector plugin ID
+const Int32 ID_PROJECTOROBJECT = 1026403; ///< PointProjector plugin ID
 
 
 /// Object plugin class
@@ -17,9 +17,9 @@ class oProjector : public ObjectData
 	INSTANCEOF(oProjector, ObjectData)
 	
 private:
-	wsPointProjector	_projector;				///< Projector object that does all the work for us (and nicely separates the projection code from the Deformer/Object code)
-	UInt32						_lastDirtyness;		///< Used to store the last retreived dirty checksum for later comparison
-	AutoAlloc<C4D_Falloff>	_falloff;		///< Provides the functions needed to support falloffs
+	wsPointProjector        _projector;      ///< Projector object that does all the work for us (and nicely separates the projection code from the Deformer/Object code)
+	UInt32                  _lastDirtyness;  ///< Used to store the last retreived dirty checksum for later comparison
+	AutoAlloc<C4D_Falloff>  _falloff;        ///< Provides the functions needed to support falloffs
 	
 public:
 	virtual Bool Init(GeListNode *node);
@@ -41,13 +41,11 @@ public:
 // Initialize node
 Bool oProjector::Init(GeListNode *node)
 {
-	// Get BaseObject
-	BaseObject *op = static_cast<BaseObject*>(node);
-	if (!op)
+	if (!node)
 		return false;
 	
 	// Get container, we want to set some data here
-	BaseContainer *bc = op->GetDataInstance();
+	BaseContainer *bc = (static_cast<BaseObject*>(node))->GetDataInstance();
 	if (!bc)
 		return false;
 	
@@ -117,19 +115,19 @@ DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS drawpass, BaseDraw *bd, Bas
 {
 	// Good practice: Always check if all required pointers are set
 	if (!op || !bd || !bh)
-		return DRAWRESULT_SKIP;
+		return DRAWRESULT_ERROR;
 	
 	if (drawpass == DRAWPASS_OBJECT)
 	{
 		// Get container, skip if that doesn't work (actually, if this doesn'T work, something is really wrong!)
 		BaseContainer *bc = op->GetDataInstance();
 		if (!bc)
-			return DRAWRESULT_SKIP;
+			return DRAWRESULT_ERROR;
 
 		// Get document, skip if no document set
 		BaseDocument *doc = op->GetDocument();
 		if (!doc)
-			return DRAWRESULT_OK;
+			return DRAWRESULT_ERROR;
 
 		// Set draw matrix
 		bd->SetMatrix_Matrix(op, bh->GetMg());

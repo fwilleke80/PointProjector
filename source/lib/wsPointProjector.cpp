@@ -51,15 +51,11 @@ Bool wsPointProjector::ProjectPosition(Vector &position, const Vector &rayDirect
 		
 		// Apply offset
 		if (offset != 0.0)
-		{
 			workPosition += collisionResult.s_normal.GetNormalized() * offset;
-		}
 		
 		// Apply blend
 		if (blend != 1.0)
-		{
 			workPosition = Blend(rPos, workPosition, blend);
-		}
 		
 		// Transform position back to global space
 		position = collisionObjectMg * workPosition;
