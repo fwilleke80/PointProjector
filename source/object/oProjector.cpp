@@ -206,7 +206,7 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 	// Calculate weight map from vertex maps linked in restriction tag
 	Float32* weightMap = nullptr;
 	weightMap = ToPoint(op)->CalcVertexMap(mod);
-	if (weightMap)
+	if (!weightMap)
 		return false;
 
 	// Initialize falloff
