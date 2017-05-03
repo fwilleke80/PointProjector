@@ -1,3 +1,6 @@
+1.4.4
+- Fixed bug that broke all deformations without weight map
+
 1.4.3
 - Only internal changes
 - Lots of code style fixes
