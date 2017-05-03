@@ -200,9 +200,9 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		A08C5CDEA3A6683339000000 /* PointProjector */ = {
+		A08C5CDEA3A6683339000000 /* PointProjector_R18 */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A0A668333900000000460000 /* Build configuration list for PBXNativeTarget "PointProjector" */;
+			buildConfigurationList = A0A668333900000000460000 /* Build configuration list for PBXNativeTarget "PointProjector_R18" */;
 			buildPhases = (
 				A0A668333900000000320000 /* Sources */,
 				A0A6683339000000000F0000 /* Frameworks */,
@@ -213,7 +213,7 @@
 			dependencies = (
 				A0A6683339F470FF41370000 /* PBXTargetDependency */,
 			);
-			name = PointProjector;
+			name = PointProjector_R18;
 			productName = cinema4dsdk;
 			productReference = A08C5CDEA3A66833397B0000 /* PointProjector.dylib */;
 			productType = "com.apple.product-type.library.dynamic";
@@ -227,7 +227,7 @@
 				LastUpgradeCheck = 0810;
 				ORGANIZATIONNAME = "";
 			};
-			buildConfigurationList = A0A668333900000000410000 /* Build configuration list for PBXProject "PointProjector" */;
+			buildConfigurationList = A0A668333900000000410000 /* Build configuration list for PBXProject "PointProjector_R18" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -245,7 +245,7 @@
 			);
 			projectRoot = "";
 			targets = (
-				A08C5CDEA3A6683339000000 /* PointProjector */,
+				A08C5CDEA3A6683339000000 /* PointProjector_R18 */,
 			);
 		};
 /* End PBXProject section */
@@ -301,6 +301,8 @@
 				GCC_NO_COMMON_BLOCKS = YES;
 				MAXON_ROOTDIR = ../../;
 				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_MODULE_NAME = PointProjector;
+				PRODUCT_NAME = PointProjector;
 				USER_HEADER_SEARCH_PATHS = "./source ./res ./res/description $(MAXON_ROOTDIR)frameworks/cinema.framework/source/** $(inherited)";
 			};
 			name = UnitySanitize;
@@ -311,7 +313,6 @@
 				DEPLOYMENT_LOCATION = YES;
 				EXECUTABLE_EXTENSION = dylib;
 				INSTALL_PATH = /.;
-				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = UnitySanitize;
 		};
@@ -326,6 +327,8 @@
 				GCC_NO_COMMON_BLOCKS = YES;
 				MAXON_ROOTDIR = ../../;
 				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_MODULE_NAME = PointProjector;
+				PRODUCT_NAME = PointProjector;
 				USER_HEADER_SEARCH_PATHS = "./source ./res ./res/description $(MAXON_ROOTDIR)frameworks/cinema.framework/source/** $(inherited)";
 			};
 			name = Sanitize;
@@ -336,7 +339,6 @@
 				DEPLOYMENT_LOCATION = YES;
 				EXECUTABLE_EXTENSION = dylib;
 				INSTALL_PATH = /.;
-				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Sanitize;
 		};
@@ -351,6 +353,8 @@
 				GCC_NO_COMMON_BLOCKS = YES;
 				MAXON_ROOTDIR = ../../;
 				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_MODULE_NAME = PointProjector;
+				PRODUCT_NAME = PointProjector;
 				USER_HEADER_SEARCH_PATHS = "./source ./res ./res/description $(MAXON_ROOTDIR)frameworks/cinema.framework/source/** $(inherited)";
 			};
 			name = Debug;
@@ -364,6 +368,8 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_NO_COMMON_BLOCKS = YES;
 				MAXON_ROOTDIR = ../../;
+				PRODUCT_MODULE_NAME = PointProjector;
+				PRODUCT_NAME = PointProjector;
 				USER_HEADER_SEARCH_PATHS = "./source ./res ./res/description $(MAXON_ROOTDIR)frameworks/cinema.framework/source/** $(inherited)";
 			};
 			name = Release;
@@ -374,7 +380,6 @@
 				DEPLOYMENT_LOCATION = YES;
 				EXECUTABLE_EXTENSION = dylib;
 				INSTALL_PATH = /.;
-				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
 		};
@@ -384,14 +389,13 @@
 				DEPLOYMENT_LOCATION = YES;
 				EXECUTABLE_EXTENSION = dylib;
 				INSTALL_PATH = /.;
-				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A0A668333900000000410000 /* Build configuration list for PBXProject "PointProjector" */ = {
+		A0A668333900000000410000 /* Build configuration list for PBXProject "PointProjector_R18" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A0A6683339000000004B0000 /* Debug */,
@@ -402,7 +406,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		A0A668333900000000460000 /* Build configuration list for PBXNativeTarget "PointProjector" */ = {
+		A0A668333900000000460000 /* Build configuration list for PBXNativeTarget "PointProjector_R18" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A0A6683339000000005A0000 /* Debug */,
