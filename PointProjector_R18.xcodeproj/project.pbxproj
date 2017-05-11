@@ -1,0 +1,423 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0190185A1DCB48F7000D41F4 /* wsPointProjector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 019018561DCB48F7000D41F4 /* wsPointProjector.cpp */; };
+		0190185B1DCB48F7000D41F4 /* wsPointProjector.h in Headers */ = {isa = PBXBuildFile; fileRef = 019018571DCB48F7000D41F4 /* wsPointProjector.h */; };
+		0190185C1DCB48F7000D41F4 /* oProjector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 019018591DCB48F7000D41F4 /* oProjector.cpp */; };
+		01F3FE681E3657240040DDE0 /* wsFunctions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 01F3FE661E3657240040DDE0 /* wsFunctions.cpp */; };
+		01F3FE691E3657240040DDE0 /* wsFunctions.h in Headers */ = {isa = PBXBuildFile; fileRef = 01F3FE671E3657240040DDE0 /* wsFunctions.h */; };
+		A0A66833391837B5E7010000 /* main.h in Headers */ = {isa = PBXBuildFile; fileRef = A0A66833391837B5E7000000 /* main.h */; };
+		A0A6683339E921D362010000 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A0A6683339E921D362000000 /* main.cpp */; };
+		A0A6683339F470FF41010000 /* libcinema.framework.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A0A6683339F470FF41000000 /* libcinema.framework.a */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		28945ECC17E25C1A009BE29F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A0A6683339F470FF41020000 /* cinema.framework.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = A08C5CDEA3F470FF417B0100;
+			remoteInfo = "cinema.framework static library";
+		};
+		A0A6683339F470FF41040000 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A0A6683339F470FF41020000 /* cinema.framework.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = A08C5CDEA3F470FF417B0000;
+			remoteInfo = cinema.framework;
+		};
+		A0A6683339F470FF41050000 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A0A6683339F470FF41020000 /* cinema.framework.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = A08C5CDEA3F470FF41000000;
+			remoteInfo = cinema.framework;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		016C387C1E1FFA350065EF9A /* c4d_symbols.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = c4d_symbols.h; path = res/c4d_symbols.h; sourceTree = "<group>"; };
+		016C387D1E1FFA3E0065EF9A /* oProjector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = oProjector.h; path = res/description/oProjector.h; sourceTree = "<group>"; };
+		016C387E1E1FFA3E0065EF9A /* oProjector.res */ = {isa = PBXFileReference; lastKnownFileType = text; name = oProjector.res; path = res/description/oProjector.res; sourceTree = "<group>"; };
+		016C38811E1FFA600065EF9A /* c4d_strings.str */ = {isa = PBXFileReference; lastKnownFileType = text; name = c4d_strings.str; path = res/strings_de/c4d_strings.str; sourceTree = "<group>"; };
+		016C38821E1FFA6A0065EF9A /* oProjector.str */ = {isa = PBXFileReference; lastKnownFileType = text; name = oProjector.str; path = res/strings_de/description/oProjector.str; sourceTree = "<group>"; };
+		016C38831E1FFA720065EF9A /* c4d_strings.str */ = {isa = PBXFileReference; lastKnownFileType = text; name = c4d_strings.str; path = res/strings_us/c4d_strings.str; sourceTree = "<group>"; };
+		016C38841E1FFA790065EF9A /* oProjector.str */ = {isa = PBXFileReference; lastKnownFileType = text; name = oProjector.str; path = res/strings_us/description/oProjector.str; sourceTree = "<group>"; };
+		019018561DCB48F7000D41F4 /* wsPointProjector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = wsPointProjector.cpp; sourceTree = "<group>"; };
+		019018571DCB48F7000D41F4 /* wsPointProjector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wsPointProjector.h; sourceTree = "<group>"; };
+		019018591DCB48F7000D41F4 /* oProjector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = oProjector.cpp; sourceTree = "<group>"; };
+		01F3FE661E3657240040DDE0 /* wsFunctions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = wsFunctions.cpp; sourceTree = "<group>"; };
+		01F3FE671E3657240040DDE0 /* wsFunctions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wsFunctions.h; sourceTree = "<group>"; };
+		8ACD68381C66E7D100F34089 /* sanitizerbase.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = sanitizerbase.xcconfig; path = ../../frameworks/settings/sanitizerbase.xcconfig; sourceTree = "<group>"; };
+		A08C5CDEA3A66833397B0000 /* PointProjector.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = PointProjector.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		A0A668333900000000000000 /* debugbase.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = debugbase.xcconfig; path = ../../frameworks/settings/debugbase.xcconfig; sourceTree = SOURCE_ROOT; };
+		A0A668333900000000050000 /* releasebase.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = releasebase.xcconfig; path = ../../frameworks/settings/releasebase.xcconfig; sourceTree = SOURCE_ROOT; };
+		A0A66833391837B5E7000000 /* main.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = main.h; path = source/main.h; sourceTree = SOURCE_ROOT; };
+		A0A6683339E921D362000000 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = source/main.cpp; sourceTree = SOURCE_ROOT; };
+		A0A6683339F470FF41020000 /* cinema.framework.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = cinema.framework.xcodeproj; path = ../../frameworks/cinema.framework/project/cinema.framework.xcodeproj; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A0A6683339000000000F0000 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A0A6683339F470FF41010000 /* libcinema.framework.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		016C387A1E1FFA200065EF9A /* resources */ = {
+			isa = PBXGroup;
+			children = (
+				016C387F1E1FFA4A0065EF9A /* strings_us */,
+				016C38801E1FFA540065EF9A /* strings_de */,
+				016C387D1E1FFA3E0065EF9A /* oProjector.h */,
+				016C387E1E1FFA3E0065EF9A /* oProjector.res */,
+				016C387C1E1FFA350065EF9A /* c4d_symbols.h */,
+			);
+			name = resources;
+			sourceTree = "<group>";
+		};
+		016C387F1E1FFA4A0065EF9A /* strings_us */ = {
+			isa = PBXGroup;
+			children = (
+				016C38841E1FFA790065EF9A /* oProjector.str */,
+				016C38831E1FFA720065EF9A /* c4d_strings.str */,
+			);
+			name = strings_us;
+			sourceTree = "<group>";
+		};
+		016C38801E1FFA540065EF9A /* strings_de */ = {
+			isa = PBXGroup;
+			children = (
+				016C38821E1FFA6A0065EF9A /* oProjector.str */,
+				016C38811E1FFA600065EF9A /* c4d_strings.str */,
+			);
+			name = strings_de;
+			sourceTree = "<group>";
+		};
+		019018551DCB48F7000D41F4 /* lib */ = {
+			isa = PBXGroup;
+			children = (
+				019018561DCB48F7000D41F4 /* wsPointProjector.cpp */,
+				019018571DCB48F7000D41F4 /* wsPointProjector.h */,
+				01F3FE661E3657240040DDE0 /* wsFunctions.cpp */,
+				01F3FE671E3657240040DDE0 /* wsFunctions.h */,
+			);
+			name = lib;
+			path = source/lib;
+			sourceTree = SOURCE_ROOT;
+		};
+		019018581DCB48F7000D41F4 /* object */ = {
+			isa = PBXGroup;
+			children = (
+				019018591DCB48F7000D41F4 /* oProjector.cpp */,
+			);
+			name = object;
+			path = source/object;
+			sourceTree = SOURCE_ROOT;
+		};
+		A0A668333900000000140000 /* libs */ = {
+			isa = PBXGroup;
+			children = (
+				A0A6683339F470FF41020000 /* cinema.framework.xcodeproj */,
+			);
+			name = libs;
+			sourceTree = "<group>";
+		};
+		A0A668333900000000190000 /* configurations */ = {
+			isa = PBXGroup;
+			children = (
+				8ACD68381C66E7D100F34089 /* sanitizerbase.xcconfig */,
+				A0A668333900000000000000 /* debugbase.xcconfig */,
+				A0A668333900000000050000 /* releasebase.xcconfig */,
+			);
+			name = configurations;
+			sourceTree = "<group>";
+		};
+		A0A6683339000000001E0000 = {
+			isa = PBXGroup;
+			children = (
+				A0A668333900000000190000 /* configurations */,
+				A0A668333900000000140000 /* libs */,
+				A0A668333900000000230000 /* products */,
+				016C387A1E1FFA200065EF9A /* resources */,
+				A0A6683339CA90681B000000 /* source */,
+			);
+			sourceTree = "<group>";
+		};
+		A0A668333900000000230000 /* products */ = {
+			isa = PBXGroup;
+			children = (
+				A08C5CDEA3A66833397B0000 /* PointProjector.dylib */,
+			);
+			name = products;
+			sourceTree = "<group>";
+		};
+		A0A6683339CA90681B000000 /* source */ = {
+			isa = PBXGroup;
+			children = (
+				019018551DCB48F7000D41F4 /* lib */,
+				019018581DCB48F7000D41F4 /* object */,
+				A0A6683339E921D362000000 /* main.cpp */,
+				A0A66833391837B5E7000000 /* main.h */,
+			);
+			name = source;
+			path = ../source;
+			sourceTree = SOURCE_ROOT;
+		};
+		A0A6683339F470FF41280000 /* products */ = {
+			isa = PBXGroup;
+			children = (
+				A0A6683339F470FF41000000 /* libcinema.framework.a */,
+				28945ECD17E25C1A009BE29F /* libcinema.framework_static.a */,
+			);
+			name = products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		A0A6683339000000002D0000 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				01F3FE691E3657240040DDE0 /* wsFunctions.h in Headers */,
+				0190185B1DCB48F7000D41F4 /* wsPointProjector.h in Headers */,
+				A0A66833391837B5E7010000 /* main.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		A08C5CDEA3A6683339000000 /* PointProjector_R18 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A0A668333900000000460000 /* Build configuration list for PBXNativeTarget "PointProjector_R18" */;
+			buildPhases = (
+				A0A668333900000000320000 /* Sources */,
+				A0A6683339000000000F0000 /* Frameworks */,
+				A0A6683339000000002D0000 /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A0A6683339F470FF41370000 /* PBXTargetDependency */,
+			);
+			name = PointProjector_R18;
+			productName = cinema4dsdk;
+			productReference = A08C5CDEA3A66833397B0000 /* PointProjector.dylib */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A0A6683339000000003C0000 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0810;
+				ORGANIZATIONNAME = "";
+			};
+			buildConfigurationList = A0A668333900000000410000 /* Build configuration list for PBXProject "PointProjector_R18" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = A0A6683339000000001E0000;
+			productRefGroup = A0A668333900000000230000 /* products */;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = A0A6683339F470FF41280000 /* products */;
+					ProjectRef = A0A6683339F470FF41020000 /* cinema.framework.xcodeproj */;
+				},
+			);
+			projectRoot = "";
+			targets = (
+				A08C5CDEA3A6683339000000 /* PointProjector_R18 */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		28945ECD17E25C1A009BE29F /* libcinema.framework_static.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libcinema.framework_static.a;
+			remoteRef = 28945ECC17E25C1A009BE29F /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		A0A6683339F470FF41000000 /* libcinema.framework.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libcinema.framework.a;
+			remoteRef = A0A6683339F470FF41040000 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A0A668333900000000320000 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0190185C1DCB48F7000D41F4 /* oProjector.cpp in Sources */,
+				A0A6683339E921D362010000 /* main.cpp in Sources */,
+				0190185A1DCB48F7000D41F4 /* wsPointProjector.cpp in Sources */,
+				01F3FE681E3657240040DDE0 /* wsFunctions.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A0A6683339F470FF41370000 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = cinema.framework;
+			targetProxy = A0A6683339F470FF41050000 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		8A256EB71D81E7D100E325D9 /* UnitySanitize */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 8ACD68381C66E7D100F34089 /* sanitizerbase.xcconfig */;
+			buildSettings = {
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				MAXON_ROOTDIR = ../../;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_MODULE_NAME = PointProjector;
+				PRODUCT_NAME = PointProjector;
+				USER_HEADER_SEARCH_PATHS = "./source ./res ./res/description $(MAXON_ROOTDIR)frameworks/cinema.framework/source/** $(inherited)";
+			};
+			name = UnitySanitize;
+		};
+		8A256EB81D81E7D100E325D9 /* UnitySanitize */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEPLOYMENT_LOCATION = YES;
+				EXECUTABLE_EXTENSION = dylib;
+				INSTALL_PATH = /.;
+			};
+			name = UnitySanitize;
+		};
+		8ACD68351C66E7A300F34089 /* Sanitize */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 8ACD68381C66E7D100F34089 /* sanitizerbase.xcconfig */;
+			buildSettings = {
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				MAXON_ROOTDIR = ../../;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_MODULE_NAME = PointProjector;
+				PRODUCT_NAME = PointProjector;
+				USER_HEADER_SEARCH_PATHS = "./source ./res ./res/description $(MAXON_ROOTDIR)frameworks/cinema.framework/source/** $(inherited)";
+			};
+			name = Sanitize;
+		};
+		8ACD68361C66E7A300F34089 /* Sanitize */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEPLOYMENT_LOCATION = YES;
+				EXECUTABLE_EXTENSION = dylib;
+				INSTALL_PATH = /.;
+			};
+			name = Sanitize;
+		};
+		A0A6683339000000004B0000 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A0A668333900000000000000 /* debugbase.xcconfig */;
+			buildSettings = {
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				MAXON_ROOTDIR = ../../;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_MODULE_NAME = PointProjector;
+				PRODUCT_NAME = PointProjector;
+				USER_HEADER_SEARCH_PATHS = "./source ./res ./res/description $(MAXON_ROOTDIR)frameworks/cinema.framework/source/** $(inherited)";
+			};
+			name = Debug;
+		};
+		A0A668333900000000500000 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A0A668333900000000050000 /* releasebase.xcconfig */;
+			buildSettings = {
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				MAXON_ROOTDIR = ../../;
+				PRODUCT_MODULE_NAME = PointProjector;
+				PRODUCT_NAME = PointProjector;
+				USER_HEADER_SEARCH_PATHS = "./source ./res ./res/description $(MAXON_ROOTDIR)frameworks/cinema.framework/source/** $(inherited)";
+			};
+			name = Release;
+		};
+		A0A6683339000000005A0000 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEPLOYMENT_LOCATION = YES;
+				EXECUTABLE_EXTENSION = dylib;
+				INSTALL_PATH = /.;
+			};
+			name = Debug;
+		};
+		A0A6683339000000005F0000 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEPLOYMENT_LOCATION = YES;
+				EXECUTABLE_EXTENSION = dylib;
+				INSTALL_PATH = /.;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A0A668333900000000410000 /* Build configuration list for PBXProject "PointProjector_R18" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A0A6683339000000004B0000 /* Debug */,
+				8ACD68351C66E7A300F34089 /* Sanitize */,
+				8A256EB71D81E7D100E325D9 /* UnitySanitize */,
+				A0A668333900000000500000 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A0A668333900000000460000 /* Build configuration list for PBXNativeTarget "PointProjector_R18" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A0A6683339000000005A0000 /* Debug */,
+				8ACD68361C66E7A300F34089 /* Sanitize */,
+				8A256EB81D81E7D100E325D9 /* UnitySanitize */,
+				A0A6683339000000005F0000 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A0A6683339000000003C0000 /* Project object */;
+}

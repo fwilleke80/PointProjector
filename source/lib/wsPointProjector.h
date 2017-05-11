@@ -28,11 +28,26 @@ struct wsPointProjectorParams
 	C4D_Falloff  *_falloff;                 ///< Ptr to falloff
 	
 	/// Default constructor
-	wsPointProjectorParams() : _mode(PROJECTORMODE_PARALLEL), _offset(0.0), _blend(0.0), _geometryFalloffEnabled(false), _geometryFalloffDist(0.0), _weightMap(nullptr), _falloff(nullptr)
+	wsPointProjectorParams() :
+		_mode(PROJECTORMODE_PARALLEL),
+		_offset(0.0),
+		_blend(0.0),
+		_geometryFalloffEnabled(false),
+		_geometryFalloffDist(0.0),
+		_weightMap(nullptr),
+		_falloff(nullptr)
 	{ }
 	
 	/// Constructor with parameters
-	wsPointProjectorParams(const Matrix &modifierMg, PROJECTORMODE mode, Float offset, Float blend, Bool geometryFalloffEnabled, Float geometryFalloffDist, Float32 *weightMap = nullptr, C4D_Falloff *falloff = nullptr) : _modifierMg(modifierMg), _mode(mode), _offset(offset), _blend(blend), _geometryFalloffEnabled(geometryFalloffEnabled), _geometryFalloffDist(geometryFalloffDist), _weightMap(weightMap), _falloff(falloff)
+	wsPointProjectorParams(const Matrix &modifierMg, PROJECTORMODE mode, Float offset, Float blend, Bool geometryFalloffEnabled, Float geometryFalloffDist, Float32 *weightMap = nullptr, C4D_Falloff *falloff = nullptr) :
+		_modifierMg(modifierMg),
+		_mode(mode),
+		_offset(offset),
+		_blend(blend),
+		_geometryFalloffEnabled(geometryFalloffEnabled),
+		_geometryFalloffDist(geometryFalloffDist),
+		_weightMap(weightMap),
+		_falloff(falloff)
 	{ }
 };
 
