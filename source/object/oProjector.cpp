@@ -65,8 +65,10 @@ Bool oProjector::Message(GeListNode *node, Int32 type, void *data)
 	// Good practice: Always check if all required pointers are set
 	if (!node || !_falloff)
 		return false;
+	
+	BaseObject *op = static_cast<BaseObject*>(node);
 
-	BaseContainer *bc = (static_cast<BaseObject*>(node))->GetDataInstance();
+	BaseContainer *bc = op->GetDataInstance();
 	if (!bc)
 		return false;
 
@@ -74,7 +76,7 @@ Bool oProjector::Message(GeListNode *node, Int32 type, void *data)
 	{
 		// Enable the deformer object
 		case MSG_MENUPREPARE:
-			(static_cast<BaseObject*>(node))->SetDeformMode(true);
+			op->SetDeformMode(true);
 			return true;
 		
 		// The user wants to drop something somewhere
@@ -204,8 +206,7 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 	Float geometryFalloffDist = bc->GetFloat(PROJECTOR_GEOMFALLOFF_DIST, 100.0);
 	
 	// Calculate weight map from vertex maps linked in restriction tag
-	Float32* weightMap = nullptr;
-	weightMap = ToPoint(op)->CalcVertexMap(mod);
+	Float32* weightMap = static_cast<PointObject*>(op)->CalcVertexMap(mod);
 
 	// Initialize falloff
 	if (!_falloff->InitFalloff(bc, doc, mod))
@@ -216,7 +217,7 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 		return false;
 
 	// Parameters for projection
-	wsPointProjectorParams projectorParams(mod->GetMg(), mode, offset, blend, geometryFalloffEnabled, geometryFalloffDist, weightMap, _falloff);
+	wsPointProjectorParams projectorParams(mod_mg, mode, offset, blend, geometryFalloffEnabled, geometryFalloffDist, weightMap, _falloff);
 	
 	// Perform projection
 	if (!_projector.Project(static_cast<PointObject*>(op), projectorParams, thread))
