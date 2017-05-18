@@ -108,10 +108,10 @@
 		019018551DCB48F7000D41F4 /* lib */ = {
 			isa = PBXGroup;
 			children = (
-				019018561DCB48F7000D41F4 /* wsPointProjector.cpp */,
 				019018571DCB48F7000D41F4 /* wsPointProjector.h */,
-				01F3FE661E3657240040DDE0 /* wsFunctions.cpp */,
+				019018561DCB48F7000D41F4 /* wsPointProjector.cpp */,
 				01F3FE671E3657240040DDE0 /* wsFunctions.h */,
+				01F3FE661E3657240040DDE0 /* wsFunctions.cpp */,
 			);
 			name = lib;
 			path = source/lib;
