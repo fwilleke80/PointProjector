@@ -8,28 +8,29 @@
 
 
 /// Modes of projection
-enum PROJECTORMODE
+enum class PROJECTORMODE
 {
-	PROJECTORMODE_PARALLEL	= 1,
-	PROJECTORMODE_SPHERICAL	= 2
-} ENUM_END_LIST(PROJECTORMODE);
+	NONE		= 0,
+	PARALLEL	= 1,
+	SPHERICAL	= 2
+} MAXON_ENUM_LIST(PROJECTORMODE);
 
 
 /// Parameters for projection
 struct wsPointProjectorParams
 {
-	Matrix        _modifierMg;              ///< Global matrix of modifier
-	PROJECTORMODE _mode;                    ///< Projector mode (parallel or spherical)
-	Float         _offset;                  ///< Offset attribute
-	Float         _blend;                   ///< Blend attribute
-	Bool          _geometryFalloffEnabled;  ///< Geometry falloff enabled attribute
-	Float         _geometryFalloffDist;     ///< Geometry falloff distance attribute
-	Float32      *_weightMap;               ///< Ptr to weight map
-	C4D_Falloff  *_falloff;                 ///< Ptr to falloff
+	Matrix        _modifierMg;										///< Global matrix of modifier
+	PROJECTORMODE _mode = PROJECTORMODE::NONE;		///< Projector mode (parallel or spherical)
+	Float         _offset = 0.0_f;								///< Offset attribute
+	Float         _blend = 0.0_f;									///< Blend attribute
+	Bool          _geometryFalloffEnabled = true;	///< Geometry falloff enabled attribute
+	Float         _geometryFalloffDist = 0.0_f;		///< Geometry falloff distance attribute
+	Float32*			_weightMap = nullptr;						///< Ptr to weight map
+	C4D_Falloff  *_falloff = nullptr;							///< Ptr to falloff
 	
 	/// Default constructor
 	wsPointProjectorParams() :
-		_mode(PROJECTORMODE_PARALLEL),
+		_mode(PROJECTORMODE::PARALLEL),
 		_offset(0.0),
 		_blend(0.0),
 		_geometryFalloffEnabled(false),

@@ -1,4 +1,4 @@
-#include "c4d.h"
+#include "maxon/apibase.h"
 #include "wsPointProjector.h"
 
 
@@ -38,7 +38,7 @@ Bool wsPointProjector::ProjectPosition(Vector &position, const Vector &rayDirect
 	Vector workPosition = collisionObjectMgI * position;            // Transform position to m_collop's local space
 	GeRayColResult collisionResult;
 	Vector rPos(workPosition);
-	Vector rDir(collisionObjectMgI.TransformVector(rayDirection));  // Transform direction to m_collop's local space
+	Vector rDir(collisionObjectMgI.sqmat * rayDirection);  // Transform direction to m_collop's local space
 
 	if (_collider->Intersect(rPos, rDir, rayLength, false))
 	{
@@ -95,10 +95,10 @@ Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &pa
 	Vector rayDirection(DC);
 	
 	// If using parallel projection, calculate rayDirection now, as it's the same for all points
-	if (params._mode == PROJECTORMODE_PARALLEL)
+	if (params._mode == PROJECTORMODE::PARALLEL)
 	{
 		// Direction points along the modifier's Z axis
-		rayDirection = params._modifierMg.v3;
+		rayDirection = params._modifierMg.sqmat.v3;
 	}
 	
 	// Calculate a ray length.
@@ -118,7 +118,7 @@ Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &pa
 
 		// Calculate ray direction for spherical projection
 		// This needs to be done inside the loop, as the direction is different for each point
-		if (params._mode == PROJECTORMODE_SPHERICAL)
+		if (params._mode == PROJECTORMODE::SPHERICAL)
 		{
 			// Direction points from the modifier to the position of the point
 			rayDirection = rayPosition - params._modifierMg.off;
