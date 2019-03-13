@@ -1,4 +1,4 @@
-#include "c4d.h"
+#include "maxon/apibase.h"
 #include "c4d_symbols.h"
 #include "wsPointProjector.h"
 #include "main.h"
@@ -9,7 +9,8 @@
 
 Bool PluginStart()
 {
-	GePrint(PLUGIN_NAME);
+	String pluginName = "PointProjector 1.4.4"_s;
+	GePrint(pluginName);
 	
 	if (!RegisterProjectorObject())
 		return false;
@@ -27,7 +28,7 @@ Bool PluginMessage(Int32 id, void *data)
 	switch (id)
 	{
 		case C4DPL_INIT_SYS:
-			return resource.Init();  // don't start plugin without resource
+			return g_resource.Init();  // don't start plugin without resource
 	}
 
 	return false;

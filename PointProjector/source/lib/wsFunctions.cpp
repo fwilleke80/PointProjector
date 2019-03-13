@@ -55,7 +55,7 @@ PolygonObject* GetRealGeometry(BaseObject* op)
 		return nullptr;
 	
 	// Create clone of op. We only need this for the modeling command.
-	BaseObject *tmpOp = static_cast<BaseObject*>(op->GetClone(COPYFLAGS_0, aliasTrans));
+	BaseObject *tmpOp = static_cast<BaseObject*>(op->GetClone(COPYFLAGS::NONE, aliasTrans));
 	if (!tmpOp)
 		return nullptr;
 	
@@ -106,11 +106,11 @@ Bool GeneratesPolygons(BaseObject* op)
 	Int32 opInfo = op->GetInfo();
 	
 	// Get some properties
-	Bool isGenerator = opInfo & OBJECT_GENERATOR;	// Is dropOp a generator object?
-	Bool isSpline = opInfo & OBJECT_ISSPLINE;	// Is it a spline?
-	Bool isDeformer = opInfo & OBJECT_MODIFIER;	// Is it a deformer?
-	Bool isParticleModifier = opInfo & OBJECT_PARTICLEMODIFIER;
-	Bool isPolygon = opInfo & OBJECT_POLYGONOBJECT;
+	Bool isGenerator = (opInfo&OBJECT_GENERATOR) == OBJECT_GENERATOR;	// Is dropOp a generator object?
+	Bool isSpline = (opInfo&OBJECT_ISSPLINE) == OBJECT_ISSPLINE;	// Is it a spline?
+	Bool isDeformer = (opInfo&OBJECT_MODIFIER) == OBJECT_MODIFIER;	// Is it a deformer?
+	Bool isParticleModifier = (opInfo&OBJECT_PARTICLEMODIFIER) == OBJECT_PARTICLEMODIFIER;
+	Bool isPolygon = (opInfo&OBJECT_POLYGONOBJECT) == OBJECT_POLYGONOBJECT;
 	
 	Bool isPolyInstance = op->IsInstanceOf(Opolygon);	// Is it a polygon object instance?
 	

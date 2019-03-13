@@ -84,22 +84,23 @@ Bool oProjector::Message(GeListNode *node, Int32 type, void *data)
 				return false;
 			
 			// Get message data
-			DescriptionCheckDragAndDrop *msgData = (DescriptionCheckDragAndDrop*)data;
+			DescriptionCheckDragAndDrop* msgData = (DescriptionCheckDragAndDrop*)data;
 			
 			// Check if something should be dropped into PROJECTOR_LINK
-			if (msgData->id == PROJECTOR_LINK)
+			if (msgData->_descId == PROJECTOR_LINK)
 			{
 				// Get object that the user wants to drop
-				BaseObject *dropOp = static_cast<BaseObject*>(msgData->element);
+				BaseObject* dropOp = static_cast<BaseObject*>(msgData->_element);
 				if (!dropOp)
 					return true;
 
 				// Allow drop if dropOp is something with geometry we can project on
-				msgData->result = GeneratesPolygons(dropOp);
+				msgData->_result = GeneratesPolygons(dropOp);
 				
 				// Return true, as we handled the message
 				return true;
 			}
+			break;
 		}
 	}
 
@@ -115,19 +116,19 @@ DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS drawpass, BaseDraw *bd, Bas
 {
 	// Good practice: Always check if all required pointers are set
 	if (!op || !bd || !bh)
-		return DRAWRESULT_ERROR;
+		return DRAWRESULT::FAILURE;
 	
-	if (drawpass == DRAWPASS_OBJECT)
+	if (drawpass == DRAWPASS::OBJECT)
 	{
 		// Get container, skip if that doesn't work (actually, if this doesn'T work, something is really wrong!)
 		BaseContainer *bc = op->GetDataInstance();
 		if (!bc)
-			return DRAWRESULT_ERROR;
+			return DRAWRESULT::FAILURE;
 
 		// Get document, skip if no document set
 		BaseDocument *doc = op->GetDocument();
 		if (!doc)
-			return DRAWRESULT_ERROR;
+			return DRAWRESULT::SKIP;
 
 		// Set draw matrix
 		bd->SetMatrix_Matrix(op, bh->GetMg());
@@ -139,7 +140,7 @@ DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS drawpass, BaseDraw *bd, Bas
 		PROJECTORMODE mode = (PROJECTORMODE)bc->GetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
 		
 		// Draw arrows in parallel mode, or star in spherical mode
-		if (mode == PROJECTORMODE_PARALLEL)
+		if (mode == PROJECTORMODE::PARALLEL)
 		{
 			DrawArrow(bd, Vector(50.0, 0.0, 0.0), 100.0, true);
 			DrawArrow(bd, Vector(-50.0, 0.0, 0.0), 100.0, true);
@@ -257,7 +258,7 @@ void oProjector::CheckDirty(BaseObject *op, BaseDocument *doc)
 	UInt32 dirtyness = 0;
 	
 	// Flags for upcoming dirty checks
-	DIRTYFLAGS dirtyFlags = DIRTYFLAGS_DATA|DIRTYFLAGS_MATRIX;
+	DIRTYFLAGS dirtyFlags = DIRTYFLAGS::DATA|DIRTYFLAGS::MATRIX;
 	
 	// Iterate collision object and its parents, and add their dirty checksums
 	dirtyness += AddDirtySums(collisionObject, false, dirtyFlags);
@@ -275,7 +276,7 @@ void oProjector::CheckDirty(BaseObject *op, BaseDocument *doc)
 		_lastDirtyness = dirtyness;
 		
 		// Set modifier dirty. It will be recalculated.
-		op->SetDirty(DIRTYFLAGS_DATA);
+		op->SetDirty(DIRTYFLAGS::DATA);
 	}
 }
 
@@ -317,10 +318,10 @@ Bool oProjector::GetDDescription(GeListNode *node, Description *description, DES
 		return false;
 
 	// Signalize the description has been loaded successfully
-	flags |= DESCFLAGS_DESC_LOADED;
+	flags |= DESCFLAGS_DESC::LOADED;
 
 	// Add falloff description
-	if (!_falloff->AddFalloffToDescription(description, bc))
+	if (!_falloff->AddFalloffToDescription(description, bc, flags))
 		return false;
 
 	return SUPER::GetDDescription(node, description, flags);
@@ -359,5 +360,5 @@ NodeData* oProjector::Alloc()
 // Register plugin
 Bool RegisterProjectorObject()
 {
-	return RegisterObjectPlugin(ID_PROJECTOROBJECT, GeLoadString(IDS_PROJECTOROBJECT), OBJECT_MODIFIER, oProjector::Alloc, "oProjector", AutoBitmap("oProjector.tif"), 0);
+	return RegisterObjectPlugin(ID_PROJECTOROBJECT, GeLoadString(IDS_PROJECTOROBJECT), OBJECT_MODIFIER, oProjector::Alloc, "oProjector"_s, AutoBitmap("oProjector.tif"_s), 0);
 }

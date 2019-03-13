@@ -1,4 +1,4 @@
-# PointProjector
+# R20 version of PointProjector
 
 A simple Cinema 4D plugin that projects the points of a spline or polygon object on geometry. It is basically like Cinema's own "Project" command, but implemented as a deformer, working with both, Splines and Polygon objects, and working non-destructively.
 
