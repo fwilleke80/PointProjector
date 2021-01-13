@@ -7,6 +7,8 @@
 *.plist
 *.dylib
 *.xlib
+*.msg
+*.stamp
 .DS_Store
 
 # Windows files
@@ -18,3 +20,7 @@
 /*.obj
 *.lastbuildstate
 *.obj
+
+# Other files
+projecttool_log.txt
+generated
