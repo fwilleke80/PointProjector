@@ -14,4 +14,4 @@ C4D=true
 stylecheck.level=3
 
 // Custom ID
-ModuleId=net.fkemmler.pointprojector
+ModuleId=de.frankwilleke.pointprojector

@@ -1,9 +1,0 @@
-- download the cinema4d c++ sdk and unpack into any folder
-- copy the PointProjector folder of the repository into the plugins folder in that same folder
-- open <yourfolder>/project/projectdefinition.txt
-	- add "plugins/PointProjector" to the end of the plugin list
-	- make sure the previous row ends with ";\"
-- download the maxon project tool https://developers.maxon.net/?page_id=1118
-- unpack the tool and run on windows "kernel_app_64bit.exe g_updateproject=<yourfolder>
-- download and install visual studio with v140 toolkit installed (vs2015 compiler, but can be installed in vs2017)
-- compile the PointProjector project in the solution.
