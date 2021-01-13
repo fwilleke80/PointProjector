@@ -269,6 +269,14 @@ void oProjector::CheckDirty(BaseObject *op, BaseDocument *doc)
 	// Iterate modifier and its parents and add their dirty checksums
 	dirtyness += AddDirtySums(op, false, dirtyFlags);
 
+#if API_VERSION >= 23000
+	// Add falloff dirtiness
+	if (_falloff)
+	{
+		dirtyness += _falloff->GetDirty(doc);
+	}
+#endif
+
 	// Compare dirty checksum to previous one, set modifier dirty if necessary
 	if (dirtyness != _lastDirtyness + 1)
 	{
