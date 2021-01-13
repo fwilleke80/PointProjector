@@ -6,6 +6,8 @@
 *.xcscheme
 *.plist
 *.dylib
+*.xlib
+.DS_Store
 
 # Windows files
 *.exp
