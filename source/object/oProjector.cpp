@@ -118,7 +118,7 @@ DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS drawpass, BaseDraw *bd, Bas
 	if (!op || !bd || !bh)
 		return DRAWRESULT::FAILURE;
 	
-	if (drawpass == DRAWPASS::OBJECT)
+	if (drawpass == DRAWPASS::OBJECT && op->GetBit(BIT_ACTIVE))
 	{
 		// Get container, skip if that doesn't work (actually, if this doesn'T work, something is really wrong!)
 		BaseContainer *bc = op->GetDataInstance();
@@ -274,6 +274,42 @@ void oProjector::CheckDirty(BaseObject *op, BaseDocument *doc)
 	if (_falloff)
 	{
 		dirtyness += _falloff->GetDirty(doc);
+
+		// Check for dirty fields
+		GeData geFieldData;
+		if (op->GetParameter(FIELDS, geFieldData, DESCFLAGS_GET::NONE))
+		{
+			// Get FieldList
+			CustomDataType* const fieldData = geFieldData.GetCustomDataType(CUSTOMDATATYPE_FIELDLIST);
+			FieldList* const fieldList  = static_cast<FieldList*>(fieldData);
+			if (fieldList)
+			{
+				dirtyness += fieldList->GetDirty(doc);
+
+				if (fieldList->HasContent())
+				{
+					// Dirty field objects
+					GeListHead *listHead = fieldList->GetLayersRoot();
+					if (listHead)
+					{
+						for (FieldLayer *layer = static_cast<FieldLayer*>(listHead->GetFirst()); layer; layer = IterateNextFieldLayer(layer))
+						{
+							// Layer node (in list)
+							dirtyness += layer->GetDirty(DIRTYFLAGS::DATA);
+
+							// Actual field object
+							const FieldLayerLink layerLink = layer->GetLinkedObject(doc);
+							BaseObject *fieldObject = static_cast<BaseObject*>(layerLink._object);
+							if (fieldObject)
+							{
+								dirtyness += fieldObject->GetDirty(DIRTYFLAGS::CACHE|DIRTYFLAGS::DATA|DIRTYFLAGS::MATRIX);
+							}
+						}
+					}
+				}
+			}
+		}
+
 	}
 #endif
 
