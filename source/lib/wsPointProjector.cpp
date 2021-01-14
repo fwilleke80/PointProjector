@@ -103,7 +103,7 @@ Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &pa
 	
 	// Calculate a ray length.
 	// The resulting length might be a bit too long, but with this we're on the safe side. No ray should ever be too short to reach the collision geometry.
-	Float rayLength = (collisionObjectMg.off - opMg.off).GetLength() + _collisionObject->GetRad().GetSum()+ op->GetRad().GetSum();
+	Float rayLength = (collisionObjectMg.off - opMg.off).GetLength() + _collisionObject->GetRad().GetSum() + op->GetRad().GetSum();
 
 	// Iterate points
 	for (Int32 i = 0; i < pointCount; i++)
@@ -120,10 +120,19 @@ Bool wsPointProjector::Project(PointObject *op, const wsPointProjectorParams &pa
 		// This needs to be done inside the loop, as the direction is different for each point
 		if (params._mode == PROJECTORMODE::SPHERICAL)
 		{
-			// Direction points from the modifier to the position of the point
-			rayDirection = rayPosition - params._modifierMg.off;
+
+			if (params._invert)
+			{
+				// Direction points from the position of the point to the modifier
+				rayDirection = params._modifierMg.off - rayPosition;
+			}
+			else
+			{
+				// Direction points from the modifier to the position of the point
+				rayDirection = rayPosition - params._modifierMg.off;
+			}
 		}
-		
+
 		// Project point, cancel if critical error occurred
 		if (!ProjectPosition(rayPosition, rayDirection, rayLength, collisionObjectMg, collisionObjectMgI, params._offset, params._blend))
 			return false;

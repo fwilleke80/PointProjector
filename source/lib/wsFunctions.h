@@ -42,4 +42,10 @@ UInt32 AddDirtySums(BaseObject *op, Bool goDown, DIRTYFLAGS flags);
 /// @return The next layer
 FieldLayer* IterateNextFieldLayer(FieldLayer* layer);
 
+Bool IsValidFieldLayer(FieldLayer* fieldLayer, BaseDocument* doc);
+
+Bool IsActiveFieldLayer(FieldLayer* fieldLayer);
+
+Int CountActiveAndValidFieldLayers(FieldList* fieldList, BaseDocument* doc);
+
 #endif // WS_FUNCTIONS_H__

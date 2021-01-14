@@ -11,7 +11,8 @@ enum
 	PROJECTOR_OFFSET              = 10003,      // REAL
 	PROJECTOR_BLEND               = 10004,      // REAL
 	PROJECTOR_GEOMFALLOFF_ENABLE  = 10005,      // BOOL
-	PROJECTOR_GEOMFALLOFF_DIST    = 10006       // REAL
+	PROJECTOR_GEOMFALLOFF_DIST    = 10006,      // REAL
+	PROJECTOR_INVERT              = 10007       // BOOL
 };
 
 #endif

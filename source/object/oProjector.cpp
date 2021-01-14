@@ -53,6 +53,7 @@ Bool oProjector::Init(GeListNode *node)
 	bc->SetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
 	bc->SetFloat(PROJECTOR_OFFSET, 0.0);
 	bc->SetFloat(PROJECTOR_BLEND, 1.0);
+	bc->SetBool(PROJECTOR_INVERT, false);
 	bc->SetBool(PROJECTOR_GEOMFALLOFF_ENABLE, false);
 	bc->SetFloat(PROJECTOR_GEOMFALLOFF_DIST, 150.0);
 
@@ -137,7 +138,7 @@ DRAWRESULT oProjector::Draw(BaseObject *op, DRAWPASS drawpass, BaseDraw *bd, Bas
 		bd->SetPen(bd->GetObjectColor(bh, op));
 
 		// Get projector mode
-		PROJECTORMODE mode = (PROJECTORMODE)bc->GetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
+		const PROJECTORMODE mode = (PROJECTORMODE)bc->GetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
 		
 		// Draw arrows in parallel mode, or star in spherical mode
 		if (mode == PROJECTORMODE::PARALLEL)
@@ -198,11 +199,12 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 	}
 
 	// Get parameters
-	PROJECTORMODE mode = (PROJECTORMODE)bc->GetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
-	Float offset = bc->GetFloat(PROJECTOR_OFFSET, 0.0);
-	Float blend = bc->GetFloat(PROJECTOR_BLEND, 1.0);
-	Bool geometryFalloffEnabled = bc->GetBool(PROJECTOR_GEOMFALLOFF_ENABLE, false);
-	Float geometryFalloffDist = bc->GetFloat(PROJECTOR_GEOMFALLOFF_DIST, 100.0);
+	const PROJECTORMODE mode = (PROJECTORMODE)bc->GetInt32(PROJECTOR_MODE, PROJECTOR_MODE_PARALLEL);
+	const Float offset = bc->GetFloat(PROJECTOR_OFFSET, 0.0);
+	const Float blend = bc->GetFloat(PROJECTOR_BLEND, 1.0);
+	const Bool geometryFalloffEnabled = bc->GetBool(PROJECTOR_GEOMFALLOFF_ENABLE, false);
+	const Float geometryFalloffDist = bc->GetFloat(PROJECTOR_GEOMFALLOFF_DIST, 100.0);
+	const Bool invert = bc->GetBool(PROJECTOR_INVERT, false);
 	
 	// Calculate weight map from vertex maps linked in restriction tag
 	Float32* weightMap = nullptr;
@@ -217,7 +219,7 @@ Bool oProjector::ModifyObject(BaseObject *mod, BaseDocument *doc, BaseObject *op
 		return false;
 
 	// Parameters for projection
-	wsPointProjectorParams projectorParams(mod->GetMg(), mode, offset, blend, geometryFalloffEnabled, geometryFalloffDist, weightMap, _falloff);
+	wsPointProjectorParams projectorParams(mod->GetMg(), mode, offset, blend, geometryFalloffEnabled, geometryFalloffDist, invert, weightMap, _falloff);
 	
 	// Perform projection
 	if (!_projector.Project(static_cast<PointObject*>(op), projectorParams, thread))
@@ -269,8 +271,7 @@ void oProjector::CheckDirty(BaseObject *op, BaseDocument *doc)
 	// Iterate modifier and its parents and add their dirty checksums
 	dirtyness += AddDirtySums(op, false, dirtyFlags);
 
-#if API_VERSION >= 23000
-	// Add falloff dirtiness
+	// Add falloff/Fields dirtiness
 	if (_falloff)
 	{
 		dirtyness += _falloff->GetDirty(doc);
@@ -311,7 +312,6 @@ void oProjector::CheckDirty(BaseObject *op, BaseDocument *doc)
 		}
 
 	}
-#endif
 
 	// Compare dirty checksum to previous one, set modifier dirty if necessary
 	if (dirtyness != _lastDirtyness + 1)

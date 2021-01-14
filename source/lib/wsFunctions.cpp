@@ -155,3 +155,60 @@ FieldLayer* IterateNextFieldLayer(FieldLayer* layer)
 
 	return layer->GetNext();
 }
+
+
+Bool IsValidFieldLayer(FieldLayer* fieldLayer, BaseDocument* doc)
+{
+	// Check pointer
+	if (!fieldLayer)
+		return false;
+
+	// Flagged as no-to-be-used (doesn't seem to work, flags are never set)
+	const FIELDLAYER_FLAG layerFlags = fieldLayer->GetLayerFlags();
+	if (layerFlags&FIELDLAYER_FLAG::SKIP ||
+			layerFlags&FIELDLAYER_FLAG::ERRORSKIP ||
+			layerFlags&FIELDLAYER_FLAG::HIDE ||
+			layerFlags&FIELDLAYER_FLAG::TEMPORARY)
+		return false;
+
+	// Dead link but not a folder (once the flags actually work, the first line can be removed)
+	if (!fieldLayer->GetLinkedObject(doc)._object &&
+			fieldLayer->GetType() != FLfolder)
+		return false;
+
+	return true;
+}
+
+
+Bool IsActiveFieldLayer(FieldLayer* fieldLayer)
+{
+	// Check pointer
+	if (!fieldLayer)
+		return false;
+
+	// Inactive or not sampling the value (we only need the ones that sample value)
+	const FIELDLAYER_CHANNELFLAG channelFlags = fieldLayer->GetChannelFlags();
+	if (!(channelFlags&FIELDLAYER_CHANNELFLAG::ENABLE))
+		return false;
+
+	// We can consider the FieldLayer active
+	return true;
+}
+
+
+Int CountActiveAndValidFieldLayers(FieldList* fieldList, BaseDocument* doc)
+{
+	if (!fieldList)
+		return NOTOK;
+
+	GeListHead *listHead = fieldList->GetLayersRoot();
+
+	Int count = 0;
+
+	for (FieldLayer *fieldLayer = static_cast<FieldLayer*>(listHead->GetFirst()); fieldLayer; fieldLayer = IterateNextFieldLayer(fieldLayer))
+	{
+		if (IsValidFieldLayer(fieldLayer, doc) && IsActiveFieldLayer(fieldLayer))
+			++count;
+	}
+	return count;
+}

@@ -7,6 +7,7 @@ STRINGTABLE oProjector
 	PROJECTOR_MODE                "Modus";
 		PROJECTOR_MODE_PARALLEL       "Parallel";
 		PROJECTOR_MODE_SPHERICAL      "Sph\u00E4risch";
+	PROJECTOR_INVERT              "Invertieren";
 	PROJECTOR_OFFSET              "Versatz";
 	PROJECTOR_BLEND               "Blenden";
 	PROJECTOR_GEOMFALLOFF_ENABLE  "Geometrie-Falloff";

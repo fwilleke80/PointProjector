@@ -26,6 +26,7 @@ struct wsPointProjectorParams
 	Bool          _geometryFalloffEnabled = true;	///< Geometry falloff enabled attribute
 	Float         _geometryFalloffDist = 0.0_f;		///< Geometry falloff distance attribute
 	Float32*			_weightMap = nullptr;						///< Ptr to weight map
+	Bool          _invert = false;
 	C4D_Falloff  *_falloff = nullptr;							///< Ptr to falloff
 	
 	/// Default constructor
@@ -36,17 +37,19 @@ struct wsPointProjectorParams
 		_geometryFalloffEnabled(false),
 		_geometryFalloffDist(0.0),
 		_weightMap(nullptr),
+		_invert(false),
 		_falloff(nullptr)
 	{ }
 	
 	/// Constructor with parameters
-	wsPointProjectorParams(const Matrix &modifierMg, PROJECTORMODE mode, Float offset, Float blend, Bool geometryFalloffEnabled, Float geometryFalloffDist, Float32 *weightMap = nullptr, C4D_Falloff *falloff = nullptr) :
+	wsPointProjectorParams(const Matrix &modifierMg, PROJECTORMODE mode, Float offset, Float blend, Bool geometryFalloffEnabled, Float geometryFalloffDist, Bool invert, Float32 *weightMap = nullptr, C4D_Falloff *falloff = nullptr) :
 		_modifierMg(modifierMg),
 		_mode(mode),
 		_offset(offset),
 		_blend(blend),
 		_geometryFalloffEnabled(geometryFalloffEnabled),
 		_geometryFalloffDist(geometryFalloffDist),
+		_invert(invert),
 		_weightMap(weightMap),
 		_falloff(falloff)
 	{ }
