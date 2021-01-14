@@ -1,5 +1,5 @@
-#ifndef __WS_FUNCTIONS_H__
-#define __WS_FUNCTIONS_H__
+#ifndef WS_FUNCTIONS_H__
+#define WS_FUNCTIONS_H__
 
 
 #include "c4d.h"
@@ -37,4 +37,9 @@ Bool GeneratesPolygons(BaseObject* op);
 /// @return The sum of the dirty checksums of all found objects
 UInt32 AddDirtySums(BaseObject *op, Bool goDown, DIRTYFLAGS flags);
 
-#endif // __WS_FUNCTIONS_H__
+/// Returns the next FieldLayer in a FieldList
+/// @param layer The current layer
+/// @return The next layer
+FieldLayer* IterateNextFieldLayer(FieldLayer* layer);
+
+#endif // WS_FUNCTIONS_H__

@@ -1,4 +1,5 @@
 #include "wsFunctions.h"
+#include "c4d_fielddata.h"
 
 
 void DrawArrow(BaseDraw *bd, const Vector &pos, Float length, Bool extra)
@@ -128,18 +129,29 @@ UInt32 AddDirtySums(BaseObject *op, Bool goDown, DIRTYFLAGS flags)
 	
 	UInt32 dirtyness = 0;
 	
-	if (goDown)
+	while (op)
 	{
-		
-	}
-	else
-	{
-		while (op)
-		{
-			dirtyness += op->GetDirty(flags);
+		dirtyness += op->GetDirty(flags);
+		if (goDown)
+			op = op->GetDown();
+		else
 			op = op->GetUp();
-		}
 	}
-	
+
 	return dirtyness;
+}
+
+
+FieldLayer* IterateNextFieldLayer(FieldLayer* layer)
+{
+	if (!layer)
+		return nullptr;
+
+	if (layer->GetDown())
+		return layer->GetDown();
+
+	while (!layer->GetNext() && layer->GetUp())
+		layer = layer->GetUp();
+
+	return layer->GetNext();
 }
