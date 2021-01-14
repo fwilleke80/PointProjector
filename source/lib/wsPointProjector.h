@@ -1,5 +1,5 @@
-#ifndef __WS_POINTPROJECTOR_H__
-#define __WS_POINTPROJECTOR_H__
+#ifndef WS_POINTPROJECTOR_H__
+#define WS_POINTPROJECTOR_H__
 
 
 #include "c4d.h"
